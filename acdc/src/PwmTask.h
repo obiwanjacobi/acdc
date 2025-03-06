@@ -8,9 +8,8 @@ class PwmTask
 {
 public:
     /** Call this method repeatedly from the main loop.
-     *  Each time the Timeout expires the BaseT::OnTimeout() method is called.
      */
-    Task_BeginWithParams(Execute, PwmOutputPinT pwmOutputPin)
+    Task_BeginParams(Run, PwmOutputPinT pwmOutputPin)
     {
         Task_YieldUntil(DelaysT::Wait(getId(), Timeout));
         pwmOutputPin.Write(_pwm);
@@ -24,5 +23,5 @@ private:
         return (uint16_t)this;
     }
     uint8_t _pwm;
-    uint16_t _task;
+    uint8_t _task;
 };

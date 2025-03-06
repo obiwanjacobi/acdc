@@ -6,8 +6,11 @@
  *  \tparam TimeT is the Time class to use - indicating time in Milliseconds or Microseconds.
  *  TimeT implements: `uint16_t Update()` - returns the delta-Time.
  *  \tparam MaxItems is the maximum number of delays that can be tracked.
+ *  \tparam TimeUnitT is the data type of the delay time.
+ *
+ *  For each item (times MaxItems) the size of uint16_t and TimeUnitT is pre-allocated (default 4 bytes per item).
  */
-template <class TimeT, const uint8_t MaxItems>
+template <class TimeT, const uint8_t MaxItems, typename TimeUnitT = uint16_t>
 class Delays
 {
 public:
@@ -60,7 +63,7 @@ public:
      *  \param time is the delay time in units the TimeT was constructed with.
      *  \return Returns true to indicate the delay has reached zero.
      */
-    static bool Wait(uint16_t id, uint32_t time)
+    static bool Wait(uint16_t id, TimeUnitT time)
     {
         int emptyIndex = -1;
 
@@ -92,7 +95,6 @@ public:
                 if (_ids[i] == 0)
                 {
                     emptyIndex = i;
-
                     break;
                 }
             }
@@ -129,28 +131,28 @@ public:
     /** Retrieves the detla-time after `Update()` was called.
      *  \return Returns the delta time in units the Time was constructed with.
      */
-    static uint16_t getLastDeltaTime()
+    static TimeUnitT getLastDeltaTime()
     {
         return _delta;
     }
 
 private:
     static TimeT _time;
-    static uint32_t _delta;
+    static TimeUnitT _delta;
     static uint16_t _ids[MaxItems];
-    static uint32_t _delays[MaxItems];
+    static TimeUnitT _delays[MaxItems];
 
     Delays() {}
 };
 
-template <class TimeT, const uint8_t MaxItems>
-TimeT Delays<TimeT, MaxItems>::_time;
+template <class TimeT, const uint8_t MaxItems, typename TimeUnitT>
+TimeT Delays<TimeT, MaxItems, TimeUnitT>::_time;
 
-template <class TimeT, const uint8_t MaxItems>
-uint32_t Delays<TimeT, MaxItems>::_delta = 0;
+template <class TimeT, const uint8_t MaxItems, typename TimeUnitT>
+TimeUnitT Delays<TimeT, MaxItems, TimeUnitT>::_delta = 0;
 
-template <class TimeT, const uint8_t MaxItems>
-uint16_t Delays<TimeT, MaxItems>::_ids[] = {};
+template <class TimeT, const uint8_t MaxItems, typename TimeUnitT>
+uint16_t Delays<TimeT, MaxItems, TimeUnitT>::_ids[] = {};
 
-template <class TimeT, const uint8_t MaxItems>
-uint32_t Delays<TimeT, MaxItems>::_delays[] = {};
+template <class TimeT, const uint8_t MaxItems, typename TimeUnitT>
+TimeUnitT Delays<TimeT, MaxItems, TimeUnitT>::_delays[] = {};

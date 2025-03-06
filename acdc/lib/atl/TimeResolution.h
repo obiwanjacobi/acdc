@@ -9,7 +9,7 @@ enum class TimeResolution
     Microseconds
 };
 
-template <TimeResolution resolution>
+template <TimeResolution ResolutionId>
 uint32_t ForClockCycles(uint32_t clockCylces);
 
 template <>
@@ -26,7 +26,7 @@ uint32_t ForClockCycles<TimeResolution::Microseconds>(uint32_t clockCylces)
 
 /** Returns the ticks in milli-seconds.
  */
-template <TimeResolution resolution>
+template <TimeResolution ResolutionId>
 uint32_t getMilliseconds(uint32_t ticks);
 
 /** Specialization for Time in Milliseconds.
@@ -47,7 +47,7 @@ uint32_t getMilliseconds<TimeResolution::Microseconds>(uint32_t ticks)
 
 /** Returns the ticks in micro-seconds.
  */
-template <TimeResolution resolution>
+template <TimeResolution ResolutionId>
 uint32_t getMicroseconds(uint32_t ticks);
 
 /** Specialization for Time in Milliseconds.

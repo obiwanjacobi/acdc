@@ -5,10 +5,10 @@
 #include "TimeResolution.h"
 #include "PowerReduction.h"
 
-#ifdef TCCR1A
+#ifdef TCNT0
 
 // This class is a quick implementation taken from Arduino. Uses Timer0.
-class TimerCounter
+class TimerCounter0
 {
 // FROM ARDUINO
 // Copyright (c) 2005-2006 David A. Mellis
@@ -86,23 +86,31 @@ public:
     }
 
 private:
-    TimerCounter() {}
+    TimerCounter0() {}
     static volatile uint32_t _milliCount;
     static volatile uint32_t _overflowCount;
     static uint8_t _fractureCount; // not volatile, only accessed from within ISR
 };
 
 template <>
-uint32_t TimerCounter::getTime<TimeResolution::Microseconds>()
+uint32_t TimerCounter0::getTime<TimeResolution::Microseconds>()
 {
     return getMicroseconds();
 }
 
 template <>
-uint32_t TimerCounter::getTime<TimeResolution::Milliseconds>()
+uint32_t TimerCounter0::getTime<TimeResolution::Milliseconds>()
 {
     return getMilliseconds();
 }
 
+volatile uint32_t TimerCounter0::_milliCount;
+volatile uint32_t TimerCounter0::_overflowCount;
+uint8_t TimerCounter0::_fractureCount;
 
-#endif // TCCR1A
+ISR(TIMER0_OVF_vect)
+{
+    TimerCounter0::OnTimerOverflowInterrupt();
+}
+
+#endif // TCNT0

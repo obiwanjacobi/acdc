@@ -10,13 +10,6 @@ enum class PowerState
 class PowerReduction
 {
 public:
-#ifdef PRR0
-    static void Timer1(PowerState state)
-    {
-        Set(PRR0, PRTIM1, state);
-    }
-#endif // PRR0
-
 #ifdef PRR
     static void Timer0(PowerState state)
     {
@@ -31,6 +24,13 @@ public:
         Set(PRR, PRTIM2, state);
     }
 #endif // PRR
+
+#ifdef PRR0
+    static void Timer1(PowerState state)
+    {
+        Set(PRR0, PRTIM1, state);
+    }
+#endif // PRR0
 
 #ifdef PRR1
     static void Timer3(PowerState state)

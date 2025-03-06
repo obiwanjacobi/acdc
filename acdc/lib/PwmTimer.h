@@ -30,31 +30,21 @@ public:
             _SFR_MEM8(channel) = value;
     }
 
-    Channel PortPinToChannel(PortPins portPin)
+    // clang-format off
+    constexpr Channel PortPinToChannel(PortPins portPin) const
     {
-        switch (portPin)
-        {
-        case PortPins::B3:
-            return Channel::A;
-        case PortPins::D3:
-            return Channel::B;
-        default:
-            return Channel::None;
-        }
+        return (portPin == PortPins::B3) 
+            ? Channel::A : (portPin == PortPins::D3)
+                ? Channel::B : Channel::None;
     }
 
-    PortPins ChannelToPortPin(Channel channel)
+    constexpr PortPins ChannelToPortPin(Channel channel) const
     {
-        switch (channel)
-        {
-        case Channel::A:
-            return PortPins::B3;
-        case Channel::B:
-            return PortPins::D3;
-        default:
-            return PortPins::None;
-        }
+        return (channel == Channel::A) 
+            ? PortPins::B3 : (channel == Channel::B) 
+                ? PortPins::D3 : PortPins::None;
     }
+    // clang-format on
 
 private:
     void init()

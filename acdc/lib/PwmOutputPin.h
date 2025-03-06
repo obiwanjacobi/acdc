@@ -1,20 +1,32 @@
 #pragma once
 #include "PwmTimer.h"
 
-template <class PwmTimer, const PortPins PortPinId>
+template <class PwmTimerT, const PortPins PortPinId>
 class PwmOutputPin
 {
 public:
-    PwmOutputPin(PwmTimer &pwmTimer)
+    PwmOutputPin()
+        : _pwmTimer(nullptr)
+    {
+        PortPin<PortPinId>::SetDirection(PinIO::Output);
+    }
+    PwmOutputPin(PwmTimerT *pwmTimer)
         : _pwmTimer(pwmTimer)
     {
-        _channel = _pwmTimer.PortPinToChannel(PortPinId);
+        _channel = _pwmTimer->PortPinToChannel(PortPinId);
         PortPin<PortPinId>::SetDirection(PinIO::Output);
+    }
+
+    void Attach(PwmTimerT *pwmTimer)
+    {
+        _pwmTimer = pwmTimer;
+        _channel = _pwmTimer->PortPinToChannel(PortPinId);
     }
 
     void Write(uint8_t dutyCycle)
     {
-        _pwmTimer.SetOutputCompareValue(_channel, dutyCycle);
+        if (_pwmTimer)
+            _pwmTimer->SetOutputCompareValue(_channel, dutyCycle);
     }
 
     PortPins getPortPin() const
@@ -23,6 +35,6 @@ public:
     }
 
 private:
-    PwmTimer &_pwmTimer;
-    typename PwmTimer::Channel _channel;
+    PwmTimerT *_pwmTimer;
+    typename PwmTimerT::Channel _channel;
 };

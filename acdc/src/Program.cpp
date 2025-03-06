@@ -1,3 +1,5 @@
+#define DEBUG
+#include "../lib/atl/Debug.h"
 #include "../lib/Port.h"
 #include "../lib/PwmTimer.h"
 #include "../lib/PwmOutputPin.h"
@@ -9,10 +11,9 @@
 #include "PwmTask.h"
 
 PwmTimer2 pwmTimer2;
-PwmOutputPin<PwmTimer2, PortPins::D3> pwmOutputPin(pwmTimer2);
+PwmOutputPin<PwmTimer2, PortPins::D3> pwmOutputPin(&pwmTimer2);
 
-// maintain max 10 delays in millisecond precision
-const uint8_t MaxItems = 10;
+const uint8_t MaxItems = 5;
 typedef Delays<Time<TimeResolution::Milliseconds>, MaxItems> Scheduler;
 
 PwmTask<Scheduler, PwmOutputPin<PwmTimer2, PortPins::D3>, 10> pwmTask;
@@ -22,14 +23,15 @@ class Program
 public:
     void Initialize()
     {
-        TimerCounter::Start();
+        // Start the timer that powers Time<TimeResolution>
+        TimerCounter0::Start();
     }
 
     void Run()
     {
         Scheduler::Update();
 
-        pwmTask.Execute(pwmOutputPin);
+        pwmTask.Run(pwmOutputPin);
     }
 };
 
@@ -47,5 +49,3 @@ int main()
 
     return 0;
 }
-
-#include "../lib/TimerCounter.cpp"
