@@ -1,0 +1,16 @@
+#pragma once
+#include "IdentifiableObject.h"
+#include "../DigitalOutputPin.h"
+
+template <const PortPins PortPinId>
+class ToggleOutputPinTask : public IdentifiableObject<DigitalOutputPin<PortPinId>>
+{
+    typedef IdentifiableObject<DigitalOutputPin<PortPinId>> BaseT;
+
+protected:
+    // called by the TimeoutTask
+    inline void OnTimeout()
+    {
+        BaseT::Toggle();
+    }
+};

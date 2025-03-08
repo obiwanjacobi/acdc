@@ -31,8 +31,14 @@ public:
     {
         PowerReduction::Timer0(PowerState::On);
 
+        // set normal timer mode
+        TCCR0A = 0;
+        // clear counter register
+        TCNT0 = 0;
         // prescaler to 64
         TCCR0B = (1 << CS00) | (1 << CS01);
+        // clear any pending overflow interrupts
+        TIFR0 = (1 << TOV0);
         // enable overflow interrupt
         TIMSK0 = (1 << TOIE0);
     }

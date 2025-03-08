@@ -11,7 +11,7 @@
  *  For each item (times MaxItems) the size of uint16_t and TimeUnitT is pre-allocated (default 4 bytes per item).
  */
 template <class TimeT, const uint8_t MaxItems, typename TimeUnitT = uint16_t>
-class Delays
+class Delays : public TimeT
 {
 public:
     /** Calls Time::Update and returns the delta time.
@@ -19,7 +19,7 @@ public:
      */
     static uint32_t Update()
     {
-        _delta = _time.Update();
+        _delta = TimeT::Update();
         return _delta;
     }
 
@@ -40,6 +40,23 @@ public:
         return false;
     }
 
+    /** Returns the delay time for the specified id.
+     *  \param id is the identification of the delay.
+     *  \return Returns the delay time in units the TimeT was constructed with.
+     */
+    static TimeUnitT DelayValue(uint16_t id)
+    {
+        for (int i = 0; i < MaxItems; i++)
+        {
+            if (_ids[i] == id)
+            {
+                return _delays[i];
+            }
+        }
+
+        return InvalidId;
+    }
+
     /** Zero's out the delay time but keeps the id in the list.
      *  The next call to Wait will report done.
      *  \param id is the identification of the delay.
@@ -56,20 +73,23 @@ public:
     }
 
     /** Can be called repeatedly and will count-down the specified time.
-     *  You must call Update to update to a new delta time.
+     *  You must call Update to update to a new delta time which is used to count down the delays.
      *  When the id is not listed it is added with the specified time.
      *  If it is listed it's delay is counted down.
-     *  \param id is the identification of the delay.
+     *  \param id is the identification of the delay - cannot be zero (InvalidId).
      *  \param time is the delay time in units the TimeT was constructed with.
      *  \return Returns true to indicate the delay has reached zero.
      */
     static bool Wait(uint16_t id, TimeUnitT time)
     {
+        if (id == InvalidId)
+            return false;
+
         int emptyIndex = -1;
 
         for (int i = 0; i < MaxItems; i++)
         {
-            if (emptyIndex == -1 && _ids[i] == 0)
+            if (emptyIndex == -1 && _ids[i] == InvalidId)
             {
                 emptyIndex = i;
                 continue;
@@ -79,7 +99,7 @@ public:
             {
                 if (_delta >= _delays[i])
                 {
-                    _ids[i] = 0;
+                    _ids[i] = InvalidId;
                     return true;
                 }
 
@@ -88,20 +108,11 @@ public:
             }
         }
 
-        if (emptyIndex == -1)
+        if (emptyIndex != -1)
         {
-            for (int i = 0; i < MaxItems; i++)
-            {
-                if (_ids[i] == 0)
-                {
-                    emptyIndex = i;
-                    break;
-                }
-            }
+            _ids[emptyIndex] = id;
+            _delays[emptyIndex] = time;
         }
-
-        _ids[emptyIndex] = id;
-        _delays[emptyIndex] = time;
 
         return false;
     }
@@ -115,29 +126,16 @@ public:
         {
             if (_ids[i] == id)
             {
-                _ids[i] = 0;
+                _ids[i] = InvalidId;
             }
         }
     }
 
-    /** Returns the Time reference used by this class.
-     *  \return Returns a reference to Time.
+    /** The invalid id value.
      */
-    static TimeT &getTime()
-    {
-        return _time;
-    }
-
-    /** Retrieves the detla-time after `Update()` was called.
-     *  \return Returns the delta time in units the Time was constructed with.
-     */
-    static TimeUnitT getLastDeltaTime()
-    {
-        return _delta;
-    }
+    static uint16_t InvalidId;
 
 private:
-    static TimeT _time;
     static TimeUnitT _delta;
     static uint16_t _ids[MaxItems];
     static TimeUnitT _delays[MaxItems];
@@ -146,10 +144,10 @@ private:
 };
 
 template <class TimeT, const uint8_t MaxItems, typename TimeUnitT>
-TimeT Delays<TimeT, MaxItems, TimeUnitT>::_time;
+uint16_t Delays<TimeT, MaxItems, TimeUnitT>::InvalidId = 0;
 
 template <class TimeT, const uint8_t MaxItems, typename TimeUnitT>
-TimeUnitT Delays<TimeT, MaxItems, TimeUnitT>::_delta = 0;
+TimeUnitT Delays<TimeT, MaxItems, TimeUnitT>::_delta;
 
 template <class TimeT, const uint8_t MaxItems, typename TimeUnitT>
 uint16_t Delays<TimeT, MaxItems, TimeUnitT>::_ids[] = {};

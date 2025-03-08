@@ -13,7 +13,7 @@ public:
      */
     DigitalOutputPin()
     {
-        PortPin<portPin>::SetDirection(Output);
+        PortPin<PortPinId>::SetDirection(Output);
     }
 
     /*
@@ -21,8 +21,8 @@ public:
      */
     DigitalOutputPin(bool initialValue)
     {
-        PortPin<portPin>::SetDirection(Output);
-        PortPin<portPin>::Write(initialValue);
+        PortPin<PortPinId>::SetDirection(Output);
+        PortPin<PortPinId>::Write(initialValue);
     }
 
     /*
@@ -30,15 +30,19 @@ public:
      */
     void Write(bool value) const
     {
-        PortPin<portPin>::Write(value);
+        PortPin<PortPinId>::Write(value);
     }
 
+    void Toggle() const
+    {
+        PortPin<PortPinId>::Toggle();
+    }
     /*
         Returns the value of the Port/Pin.
      */
     bool getValue() const
     {
-        return PortPin<portPin>::Read();
+        return PortPin<PortPinId>::Read();
     }
 
     /*

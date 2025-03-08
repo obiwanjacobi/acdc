@@ -11,6 +11,13 @@ class PowerReduction
 {
 public:
 #ifdef PRR
+#ifdef PRUSART0
+    static void Usart0(PowerState state)
+    {
+        Set(PRR, PRUSART0, state);
+    }
+#endif
+
     static void Timer0(PowerState state)
     {
         Set(PRR, PRTIM0, state);
@@ -26,6 +33,20 @@ public:
 #endif // PRR
 
 #ifdef PRR0
+#ifdef PRUSART0
+    static void Usart0(PowerState state)
+    {
+        Set(PRR0, PRUSART0, state);
+    }
+#ifdef PRUSART1
+    template <>
+    static void Usart1(PowerState state)
+    {
+        Set(PRR0, PRUSART1, state);
+    }
+#endif
+#endif
+
     static void Timer1(PowerState state)
     {
         Set(PRR0, PRTIM1, state);

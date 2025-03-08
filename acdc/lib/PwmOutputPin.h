@@ -1,6 +1,8 @@
 #pragma once
 #include "PwmTimer.h"
 
+// NOTE: Writing dutycycle 0 to the PWM pin does not completely turn off the pin.
+
 template <class PwmTimerT, const PortPins PortPinId>
 class PwmOutputPin
 {
@@ -15,12 +17,14 @@ public:
     {
         _channel = _pwmTimer->PortPinToChannel(PortPinId);
         PortPin<PortPinId>::SetDirection(PinIO::Output);
+        _pwmTimer->SetOutputCompareValue(_channel, 0);
     }
 
     void Attach(PwmTimerT *pwmTimer)
     {
         _pwmTimer = pwmTimer;
         _channel = _pwmTimer->PortPinToChannel(PortPinId);
+        _pwmTimer->SetOutputCompareValue(_channel, 0);
     }
 
     void Write(uint8_t dutyCycle)

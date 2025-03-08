@@ -263,6 +263,11 @@ public:
         return (PortReg<PortId>::In() & PinToMask()) > 0;
     }
 
+    static void Toggle()
+    {
+        Write(!Read());
+    }
+
     Ports getPort() const
     {
         return PortId;

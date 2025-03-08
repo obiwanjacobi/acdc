@@ -17,11 +17,12 @@ public:
     }
     Task_End;
 
-private:
     uint16_t getId() const
     {
         return (uint16_t)this;
     }
+
+private:
     uint8_t _pwm;
     uint8_t _task;
 };

@@ -25,7 +25,7 @@ public:
     /** Call this method repeatedly from the main loop.
      *  Each time the Timeout expires the BaseT::OnTimeout() method is called.
      */
-    Task_Begin(Execute)
+    Task_Begin(Run)
     {
         Task_YieldUntil(DelaysT::Wait(BaseT::getId(), Timeout));
         BaseT::OnTimeout();
