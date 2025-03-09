@@ -15,9 +15,25 @@ enum class BaudRates : uint32_t
 };
 
 const UsartIds usartId = UsartIds::Usart0;
-const uint8_t CharacterBufferSize = 64;
-typedef Usart<
-    usartId,
-    TextWriter<UsartOutputStream<UsartTransmit<usartId>, RingBufferFast<uint8_t, CharacterBufferSize>>>,
-    UsartInputStream<UsartReceive<usartId>, RingBufferFast<uint8_t, CharacterBufferSize>>>
-    Serial;
+const uint8_t CharacterBufferSize = 6;
+class Serial : public Usart<
+                   usartId,
+                   TextWriter<UsartOutputStream<UsartTransmit<usartId>, RingBufferFast<uint8_t, CharacterBufferSize>>>,
+                   UsartInputStream<UsartReceive<usartId>, RingBufferFast<uint8_t, CharacterBufferSize>>>
+{
+public:
+    bool Open(BaudRates baudRate, bool enableInterrupts = true)
+    {
+        UsartConfig config;
+        if (config.InitAsync((uint32_t)baudRate) &&
+            OpenAsync(config))
+        {
+            Transmit.setEnable();
+            Transmit.setEnableAcceptDataInterrupt(enableInterrupts);
+            Receive.setEnable();
+            Receive.setEnableIsCompleteInterrupt(enableInterrupts);
+            return true;
+        }
+        return false;
+    }
+};

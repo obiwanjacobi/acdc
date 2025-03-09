@@ -24,10 +24,55 @@ public:
         PowerReduction::Timer2(PowerState::On);
     }
 
+    void Enable(Channel channel, bool enable = true)
+    {
+        if (channel == Channel::None)
+            return;
+
+        // TODO: optimize this code
+        if (enable)
+        {
+            if (channel == Channel::A && !(TCCR2A & (1 << COM2A1)))
+            {
+                TCCR2A |= (1 << COM2A1); // Non-inverting mode
+            }
+            else if (channel == Channel::B && !(TCCR2A & (1 << COM2B1)))
+            {
+                TCCR2A |= (1 << COM2B1); // Non-inverting mode
+            }
+        }
+        else
+        {
+            if (channel == Channel::A)
+            {
+                TCCR2A &= ~((1 << COM2A1) | (1 << COM2A0)); // Disconnect OC2A
+                // Set the pin low manually
+                PORTB &= ~(1 << PORTB3);
+            }
+            else if (channel == Channel::B)
+            {
+                TCCR2A &= ~((1 << COM2B1) | (1 << COM2B0)); // Disconnect OC2B
+                // Set the pin low manually
+                PORTD &= ~(1 << PORTD3);
+            }
+        }
+    }
+
     void SetOutputCompareValue(Channel channel, uint8_t value)
     {
-        if (channel != Channel::None)
+        if (channel == Channel::None)
+            return;
+
+        // special case for turning off the PWM (value = 0)
+        if (value == 0)
+        {
+            Enable(channel, false);
+        }
+        else
+        {
+            Enable(channel, true);
             _SFR_MEM8(channel) = value;
+        }
     }
 
     // clang-format off

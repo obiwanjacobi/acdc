@@ -3,7 +3,7 @@
 /** The UsartInputStream can be constructed around the UsartReceive class
  *  to add buffered and interrupt based data reception.
  *  \tparam BaseT is used as base class and is the UsartReceive class and implements
- *  `void Flush()`
+ *  `void Clear()`
  *  `void setEnableIsCompleteInterrupt(bool)`
  *  `void Close()`
  *  `UsartReceiveResult getResult() const` (protected)
@@ -37,7 +37,7 @@ public:
      */
     void Clear()
     {
-        BaseT::Flush();
+        BaseT::Clear();
         _buffer.Clear();
     }
 
@@ -57,15 +57,15 @@ public:
         return -1;
     }
 
-    bool TryRead(int16_t &outData)
+    bool TryRead(uint8_t *outData)
     {
         if (!_buffer.getIsEmpty())
         {
-            outData = _buffer.Read();
+            *outData = _buffer.Read();
             return true;
         }
 
-        outData = 0;
+        *outData = 0;
         BaseT::setEnableIsCompleteInterrupt(true);
         return false;
     }

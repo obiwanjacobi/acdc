@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <avr/io.h>
+#include "Bit.h"
 
 enum class Ports : uint8_t
 {
@@ -105,9 +106,9 @@ enum class PortPins : uint8_t
 // ----------------------------------------------------------------------------
 
 template <const Ports PortId>
-class PortReg
+class PortRegisters
 {
-    static_assert(PortId != Ports::None, "PortReg<PortId> is not set (Ports::None).");
+    static_assert(PortId != Ports::None, "PortRegisters<PortId> is set to an ivalid value (Ports::None).");
 
     // get from port id to register memory address
     static const uint8_t baseRegister = (((uint8_t)PortId >> 3) - 1) * 3;
@@ -129,7 +130,7 @@ public:
     }
 
 private:
-    PortReg() {}
+    PortRegisters() {}
 };
 
 // ----------------------------------------------------------------------------
@@ -140,18 +141,18 @@ private:
 template <const Ports PortId>
 class Port
 {
-    static_assert(PortId != Ports::None, "Port<PortId> is not set (Ports::None).");
+    static_assert(PortId != Ports::None, "Port<PortId> is set to an invalid value (Ports::None).");
 
 public:
     // Enables the internal pull-up for inputs.
     // Returns false when pin is not an input.
     static bool EnablePullup(Pins pin, bool enable = true)
     {
-        uint8_t mask = PinToMask(pin);
+        uint8_t mask = BitFlag::getMask<uint8_t>((uint8_t)pin);
 
-        if ((PortReg<PortId>::Dir() & mask) == Input)
+        if ((PortRegisters<PortId>::Dir() & mask) == Input)
         {
-            PortReg<PortId>::Out() |= mask;
+            PortRegisters<PortId>::Out() |= mask;
             return true;
         }
 
@@ -161,57 +162,38 @@ public:
     static void EnableAllPullups(bool enable = true)
     {
         if (enable)
-            PortReg<PortId>::Out() = ~PortReg<PortId>::Dir();
+            PortRegisters<PortId>::Out() = ~PortRegisters<PortId>::Dir();
         else
-            PortReg<PortId>::Out() = PortReg<PortId>::Dir();
+            PortRegisters<PortId>::Out() = PortRegisters<PortId>::Dir();
     }
 
     static void SetDirection(Pins pin, PinIO io)
     {
-        uint8_t mask = PinToMask(pin);
-
-        if (io)
-            PortReg<PortId>::Dir() |= mask;
-        else
-            PortReg<PortId>::Dir() &= ~mask;
+        BitFlag::Set(PortRegisters<PortId>::Dir(), (uint8_t)pin, io);
     }
 
     static void SetDirection(PinIO io7, PinIO io6, PinIO io5, PinIO io4, PinIO io3, PinIO io2, PinIO io1, PinIO io0)
     {
-        PortReg<PortId>::Dir() = io7 << 7 | io6 << 6 | io5 << 5 | io4 << 4 | io3 << 3 | io2 << 2 | io1 << 1 | io0;
+        PortRegisters<PortId>::Dir() = io7 << 7 | io6 << 6 | io5 << 5 | io4 << 4 | io3 << 3 | io2 << 2 | io1 << 1 | io0;
     }
 
     static void SetDirection(uint8_t allPinsIO)
     {
-        PortReg<PortId>::Dir() = allPinsIO;
+        PortRegisters<PortId>::Dir() = allPinsIO;
     }
 
     static void Write(Pins pin, bool value)
     {
-        uint8_t mask = PinToMask(pin);
-
-        if (value)
-            PortReg<PortId>::Out() |= mask;
-        else
-            PortReg<PortId>::Out() &= ~mask;
+        BitFlag::Set(PortRegisters<PortId>::Out(), (uint8_t)pin, value);
     }
 
     static bool Read(Pins pin)
     {
-        return (PortReg<PortId>::In() & PinToMask(pin)) > 0;
-    }
-
-    Ports getPort() const
-    {
-        return PortId;
+        return BitFlag::IsTrue(PortRegisters<PortId>::In(), (uint8_t)pin);
     }
 
 private:
     Port() {}
-    static uint8_t PinToMask(Pins pin)
-    {
-        return 1 << (uint8_t)pin;
-    }
 };
 
 // ----------------------------------------------------------------------------
@@ -227,11 +209,11 @@ public:
     // Returns false when pin is not an input.
     static bool EnablePullup(bool enable = true)
     {
-        uint8_t mask = PinToMask();
+        uint8_t mask = Bit<(uint8_t)PinId>::getMask();
 
-        if ((PortReg<PortId>::Dir() & mask) == Input)
+        if ((PortRegisters<PortId>::Dir() & mask) == Input)
         {
-            PortReg<PortId>::Out() |= mask;
+            PortRegisters<PortId>::Out() |= mask;
             return true;
         }
 
@@ -240,27 +222,17 @@ public:
 
     static void SetDirection(PinIO io)
     {
-        uint8_t mask = PinToMask();
-
-        if (io)
-            PortReg<PortId>::Dir() |= mask;
-        else
-            PortReg<PortId>::Dir() &= ~mask;
+        Bit<(uint8_t)PinId>::Set(PortRegisters<PortId>::Dir(), io);
     }
 
     static void Write(bool value)
     {
-        uint8_t mask = PinToMask();
-
-        if (value)
-            PortReg<PortId>::Out() |= mask;
-        else
-            PortReg<PortId>::Out() &= ~mask;
+        Bit<(uint8_t)PinId>::Set(PortRegisters<PortId>::Out(), value);
     }
 
     static bool Read()
     {
-        return (PortReg<PortId>::In() & PinToMask()) > 0;
+        return Bit<(uint8_t)PinId>::IsTrue(PortRegisters<PortId>::In());
     }
 
     static void Toggle()
@@ -268,22 +240,6 @@ public:
         Write(!Read());
     }
 
-    Ports getPort() const
-    {
-        return PortId;
-    }
-    Pins getPin() const
-    {
-        return PinId;
-    }
-    PortPins getPortPin() const
-    {
-        return PortPinId;
-    }
-
 private:
-    static uint8_t PinToMask()
-    {
-        return 1 << (uint8_t)PinId;
-    }
+    PortPin() {}
 };

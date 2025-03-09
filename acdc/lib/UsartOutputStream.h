@@ -41,17 +41,14 @@ public:
     }
 
     /** Writes one byte to the stream.
-     *  Also turns on the interrupt.
      *  \param data the byte that is written to the output stream.
      */
     void Write(uint8_t data)
     {
         _buffer.Write(data);
-        BaseT::setEnableAcceptDataInterrupt(true);
     }
 
     /** Call this method from the `ISR(USARTn_UDRE_vect)` interrupt handler.
-     *  May turn of the interrupt if the buffer is empty.
      *  Not meant to be called from regular code.
      */
     void OnAcceptDataInterrupt()
@@ -60,11 +57,6 @@ public:
         {
             // write the next byte from buffer
             BaseT::WriteInternal(_buffer.Read());
-        }
-        else
-        {
-            // Turn off interrupt when no data is available.
-            BaseT::setEnableAcceptDataInterrupt(false);
         }
     }
 

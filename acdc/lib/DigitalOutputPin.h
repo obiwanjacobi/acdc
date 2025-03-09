@@ -62,7 +62,7 @@ public:
     }
 
     /*
-        Returns the portPin template parameter.
+        Returns the PortPinID template parameter.
      */
     PortPins getPortPin() const
     {

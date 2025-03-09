@@ -29,14 +29,16 @@ enum class DebugLevel : uint8_t
     Warning,
     /** Indicates a informational message. */
     Info,
-    /** Indicates a verbose or debug message. */
-    Verbose
+    /** Indicates a trace message. */
+    Trace,
+    /** Indicates a message for debugging purposes. */
+    Debug,
 };
 
 #ifdef DEBUG
 
 // Implement this method in your own code and route the message to the desired output.
-void AtlDebugWrite(const char *message) __attribute__((weak));
+void AtlDebugWrite(const uint8_t componentId, const DebugLevel level, const char *message) __attribute__((weak));
 
 // Optionally implement this method in your own code and determine what debug level and components are debugged.
 bool AtlDebugLevel(const uint8_t componentId, DebugLevel debugLevel) __attribute__((weak));
@@ -61,7 +63,7 @@ public:
 
         if (!CanLog<debugLevel>())
             return;
-        AtlDebugWrite(message);
+        AtlDebugWrite(ComponentId, debugLevel, message);
     }
 
     /** Indicates if a message to the debug target for the specified ComponentId and debugLevel.
@@ -114,3 +116,33 @@ private:
 };
 
 #endif // ~DEBUG
+
+void LogCritical(const char *message)
+{
+    Debug<>::Log<DebugLevel::Critical>(message);
+}
+
+void LogError(const char *message)
+{
+    Debug<>::Log<DebugLevel::Error>(message);
+}
+
+void LogWarning(const char *message)
+{
+    Debug<>::Log<DebugLevel::Warning>(message);
+}
+
+void LogInfo(const char *message)
+{
+    Debug<>::Log<DebugLevel::Info>(message);
+}
+
+void LogTrace(const char *message)
+{
+    Debug<>::Log<DebugLevel::Trace>(message);
+}
+
+void LogDebug(const char *message)
+{
+    Debug<>::Log<DebugLevel::Debug>(message);
+}

@@ -10,4 +10,7 @@ public:
         else
             cli();
     }
+
+private:
+    Interupts() {}
 };

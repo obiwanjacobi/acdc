@@ -115,7 +115,7 @@ private:
 
 //-----------------------------------------------------------------------------
 
-/** A smaller (max 255 items) and faster RingBuffer.
+/** A smaller (max 254 items) and faster RingBuffer.
  *	Because of its reduced size no atomic access to its buffer is required. (sizeof(T) == 8!)
  *  Capacity is always one less than the specified Size.
  *  There is NO under-run detection! Call `getCount()` or `getIsEmpty()` before calling `Read()`.
@@ -126,6 +126,7 @@ private:
 template <typename T, const uint8_t Size>
 class RingBufferFast
 {
+    static_assert(Size < 255, "Size must be less than 255!");
 #define ActualSize (Size + 1)
 
 public:

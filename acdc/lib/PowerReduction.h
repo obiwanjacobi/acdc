@@ -1,5 +1,6 @@
 #pragma once
 #include <avr/io.h>
+#include "Bit.h"
 
 enum class PowerState
 {
@@ -74,13 +75,6 @@ private:
     PowerReduction() {};
     static void Set(volatile uint8_t &reg, uint8_t bit, PowerState value)
     {
-        if (value == PowerState::Off)
-        {
-            reg |= (1 << bit);
-        }
-        else
-        {
-            reg &= ~(1 << bit);
-        }
+        BitFlag::Set(reg, bit, value == PowerState::Off);
     }
 };

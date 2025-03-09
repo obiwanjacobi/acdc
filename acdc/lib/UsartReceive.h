@@ -79,7 +79,7 @@ public:
 
     /** Discards all received data.
      */
-    void Flush()
+    void Clear()
     {
         volatile uint8_t data;
         while (!getIsComplete())

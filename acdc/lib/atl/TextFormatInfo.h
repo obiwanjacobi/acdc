@@ -24,7 +24,7 @@ public:
         baseHexadecimal = 16,
     };
 
-    /** The characters that constitute a new-line. */
+    /** The characters that constitute a new-line. Ends with a terminating zero. */
     static char NewLine[];
     /** The number of decimal places to display for floating point numbers. */
     static uint8_t DecimalDigits;

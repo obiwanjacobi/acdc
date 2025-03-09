@@ -1,12 +1,14 @@
 #define DEBUG
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/pgmspace.h>
 #include "../lib/Interupt.h"
 #include "../lib/Port.h"
 #include "../lib/PwmTimer.h"
 #include "../lib/PwmOutputPin.h"
 #include "../lib/atl/Debug.h"
 #include "../lib/atl/Delays.h"
+#include "../lib/atl/FixedString.h"
 #include "../lib/atl/Time.h"
 #include "../lib/atl/TimeResolution.h"
 #include "../lib/atl/TimeoutTask.h"
@@ -24,8 +26,11 @@ typedef Delays<Time<TimeResolution::Milliseconds>, MaxItems> Scheduler;
 PwmTask<Scheduler, PwmOutputPin<PwmTimer2, PortPins::D3>, 10> pwmTask;
 Serial serial;
 
-// DigitalOutputPin<PortPins::B5> led(false);
 TimeoutTask<ToggleOutputPinTask<PortPins::B5>, Scheduler, 300> blinkLedTask;
+
+uint8_t _pwm = 0;
+const char welcomeMsg[] PROGMEM = "AC/DC v1.0";
+const char debugMsg[] PROGMEM = "Debug is enabled";
 
 class Program
 {
@@ -34,25 +39,56 @@ public:
     {
         // Start the timer that powers Time<TimeResolution>
         TimerCounter0::Start();
+        // open serial port (usart)
+        if (!serial.Open(BaudRates::Baud115200))
+        {
+            blinkLedTask.Write(true);
+            while (1)
+            {
+                // stop here
+            }
+        }
 
-        UsartConfig config;
-        config.InitAsync((uint32_t)BaudRates::Baud9600);
-        serial.OpenAsync(config);
-        serial.Transmit.setEnable();
-        serial.Transmit.setEnableAcceptDataInterrupt(true);
-        //  serial.Receive.setEnable();
-        //  serial.Receive.setEnableIsCompleteInterrupt(true);
-
+        // finally enable global interrupts
         Interupts::Enable();
 
-        serial.Transmit.WriteLine("AC/DC v1.0");
+        FixedString<20> temp;
+        // welcome message
+        temp.CopyFromProgMem(welcomeMsg);
+        serial.Transmit.WriteLine(temp);
+
+        temp.CopyFromProgMem(debugMsg);
+        LogDebug(temp);
     }
 
     void Run()
     {
         Scheduler::Update();
 
+        // indication that the program is running
         blinkLedTask.Run();
+
+        while (serial.Receive.getCount() > 0)
+        {
+            uint8_t data;
+            if (serial.Receive.TryRead(&data))
+            {
+                // serial echo
+                serial.Transmit.Write((const char)data);
+
+                switch (data)
+                {
+                case 'u':
+                    _pwm += 10;
+                    pwmOutputPin.Write(_pwm);
+                    break;
+                case 'd':
+                    _pwm -= 10;
+                    pwmOutputPin.Write(_pwm);
+                    break;
+                }
+            }
+        }
     }
 };
 
@@ -80,13 +116,48 @@ ISR(USART_UDRE_vect)
     serial.Transmit.OnAcceptDataInterrupt();
 }
 
-void AtlDebugWrite(const char *message)
+#ifdef DEBUG
+
+void AtlDebugWrite(uint8_t componentId, DebugLevel level, const char *message)
 {
-    serial.Transmit.Write("TRACE: ");
+    serial.Transmit.Write(Scheduler::getTicks());
+    if (componentId != 0)
+    {
+        serial.Transmit.Write(" [");
+        serial.Transmit.Write(componentId);
+        serial.Transmit.Write("] ");
+    }
+    else
+        serial.Transmit.Write(" - ");
+
+    switch (level)
+    {
+    case DebugLevel::Critical:
+        serial.Transmit.Write("CRITICAL: ");
+        break;
+    case DebugLevel::Error:
+        serial.Transmit.Write("ERROR: ");
+        break;
+    case DebugLevel::Warning:
+        serial.Transmit.Write("WARNING: ");
+        break;
+    case DebugLevel::Info:
+        serial.Transmit.Write("INFO: ");
+        break;
+    case DebugLevel::Trace:
+        serial.Transmit.Write("TRACE: ");
+        break;
+    case DebugLevel::Debug:
+        serial.Transmit.Write("DEBUG: ");
+        break;
+    default:
+        break;
+    }
     serial.Transmit.WriteLine(message);
 }
 
 // bool AtlDebugLevel(uint8_t componentId, DebugLevel level)
 // {
-//     return true;
 // }
+
+#endif // DEBUG

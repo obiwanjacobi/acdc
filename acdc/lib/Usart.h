@@ -17,6 +17,9 @@ template <const UsartIds UsartId,
           typename ReceiveT = UsartReceive<UsartId>>
 class Usart
 {
+    // TODO: support other usart ids
+    static_assert(UsartId == UsartIds::Usart0, "Only Usart0 is supported");
+
 public:
     /** Gets the UsartId this instance represents.
      *  Returns the UsartId template parameter.
@@ -44,8 +47,6 @@ public:
             return false;
         }
 
-        // TODO: support other usart ids
-        static_assert(UsartId == UsartIds::Usart0, "Only Usart0 is supported");
         PowerReduction::Usart0(PowerState::On);
 
         UsartRegisters<UsartId>::getUBRR() = config.getUBRR();
@@ -63,8 +64,6 @@ public:
     {
         Receive.Close();
         Transmit.Close();
-        // TODO: support other usart ids
-        static_assert(UsartId == UsartIds::Usart0, "Only Usart0 is supported");
         PowerReduction::Usart0(PowerState::Off);
     }
 

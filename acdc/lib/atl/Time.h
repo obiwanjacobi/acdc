@@ -30,13 +30,6 @@ public:
         return ::getMicroseconds<ResolutionId>(_ticks);
     }
 
-    /** Returns the TimeResolution template parameter.
-     */
-    TimeResolution getResolution() const
-    {
-        return ResolutionId;
-    }
-
     /** Returns the raw time ticks.
      */
     static uint32_t getTicks()
