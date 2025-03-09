@@ -16,10 +16,11 @@ enum class BaudRates : uint32_t
 
 const UsartIds usartId = UsartIds::Usart0;
 const uint8_t CharacterBufferSize = 6;
-class Serial : public Usart<
-                   usartId,
-                   TextWriter<UsartOutputStream<UsartTransmit<usartId>, RingBufferFast<uint8_t, CharacterBufferSize>>>,
-                   UsartInputStream<UsartReceive<usartId>, RingBufferFast<uint8_t, CharacterBufferSize>>>
+
+typedef TextWriter<UsartOutputStream<UsartTransmit<usartId>, RingBufferFast<uint8_t, CharacterBufferSize>>> SerialWriter;
+typedef UsartInputStream<UsartReceive<usartId>, RingBufferFast<uint8_t, CharacterBufferSize>> SerialReader;
+
+class Serial : public Usart<usartId, SerialWriter, SerialReader>
 {
 public:
     bool Open(BaudRates baudRate, bool enableInterrupts = true)

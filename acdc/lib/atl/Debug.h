@@ -41,7 +41,7 @@ enum class DebugLevel : uint8_t
 void AtlDebugWrite(const uint8_t componentId, const DebugLevel level, const char *message) __attribute__((weak));
 
 // Optionally implement this method in your own code and determine what debug level and components are debugged.
-bool AtlDebugLevel(const uint8_t componentId, DebugLevel debugLevel) __attribute__((weak));
+bool AtlDebugFilter(const uint8_t componentId, DebugLevel debugLevel) __attribute__((weak));
 
 /** The Debug class allows conditionally writing messages from code to an unspecified target.
  *  The Debug class is a static class and cannot be instantiated.
@@ -61,9 +61,8 @@ public:
     {
         static_assert(debugLevel != DebugLevel::Off, "Debug::Log: Do not use DebugLevel::Off.");
 
-        if (!CanLog<debugLevel>())
-            return;
-        AtlDebugWrite(ComponentId, debugLevel, message);
+        if (CanLog<debugLevel>())
+            AtlDebugWrite(ComponentId, debugLevel, message);
     }
 
     /** Indicates if a message to the debug target for the specified ComponentId and debugLevel.
@@ -78,9 +77,9 @@ public:
 
         if (AtlDebugWrite == nullptr)
             return false;
-        if (AtlDebugLevel == nullptr)
+        if (AtlDebugFilter == nullptr)
             return true;
-        return AtlDebugLevel(ComponentId, debugLevel);
+        return AtlDebugFilter(ComponentId, debugLevel);
     }
 
 private:

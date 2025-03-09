@@ -196,6 +196,47 @@ public:
         return result;
     }
 
+    /** Reads one value from the buffer.
+     *  The method does protect against under-run.
+     *  \param outData is the value to store the read value.
+     *  \return Returns true if the read was successfull and outData was filled.
+     */
+    bool TryRead(T *outData)
+    {
+        if (getCount() == 0)
+        {
+            outData = nullptr;
+            return false;
+        }
+
+        *outData = _buffer[_readIndex];
+        _readIndex++;
+
+        if (_readIndex >= ActualSize)
+        {
+            _readIndex = 0;
+        }
+
+        return true;
+    }
+
+    /**
+     * Reads multiple values from the buffer.
+     * The method does protect against under-run.
+     */
+    uint16_t Read(T *outData, uint16_t maxCount)
+    {
+        T *p = outData;
+        uint16_t count = 0;
+
+        while (TryRead(p++) && count < maxCount)
+        {
+            count++;
+        }
+
+        return count;
+    }
+
     /** Retrieves the number of values in the buffer.
      *  \return Returns the length of the buffer.
      */

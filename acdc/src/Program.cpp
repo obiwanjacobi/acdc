@@ -16,6 +16,8 @@
 
 #include "Serial.h"
 #include "PwmTask.h"
+#include "Commands.h"
+#include "CommandHandler.h"
 
 PwmTimer2 pwmTimer2;
 PwmOutputPin<PwmTimer2, PortPins::D3> pwmOutputPin(&pwmTimer2);
@@ -31,6 +33,9 @@ TimeoutTask<ToggleOutputPinTask<PortPins::B5>, Scheduler, 300> blinkLedTask;
 uint8_t _pwm = 0;
 const char welcomeMsg[] PROGMEM = "AC/DC v1.0";
 const char debugMsg[] PROGMEM = "Debug is enabled";
+
+CommandParser<RingBufferFast<char, 16>> commandParser;
+CommandDispatcher<CommandHandler<SerialWriter>> commandDispatcher;
 
 class Program
 {
@@ -59,6 +64,8 @@ public:
 
         temp.CopyFromProgMem(debugMsg);
         LogDebug(temp);
+
+        commandDispatcher.SetTextWriter(&serial.Transmit);
     }
 
     void Run()
@@ -75,6 +82,29 @@ public:
             {
                 // serial echo
                 serial.Transmit.Write((const char)data);
+
+                bool parsed = commandParser.Parse(data);
+                // serial.Transmit.WriteLine(parsed ? " ok" : " nok");
+                if (parsed)
+                {
+                    if (commandParser.IsError())
+                    {
+                        serial.Transmit.Write("<X>");
+                        commandParser.Clear();
+                    }
+                    else if (commandParser.IsComplete())
+                    {
+                        if (commandParser.Dispatch(commandDispatcher))
+                        {
+                            serial.Transmit.Write("<OK>");
+                        }
+                        else
+                        {
+                            serial.Transmit.Write("<NOK>");
+                        }
+                        commandParser.Clear();
+                    }
+                }
 
                 switch (data)
                 {
@@ -156,8 +186,12 @@ void AtlDebugWrite(uint8_t componentId, DebugLevel level, const char *message)
     serial.Transmit.WriteLine(message);
 }
 
-// bool AtlDebugLevel(uint8_t componentId, DebugLevel level)
-// {
-// }
+bool AtlDebugFilter(uint8_t componentId, DebugLevel level)
+{
+    if (componentId == 1)
+        return false;
+
+    return true;
+}
 
 #endif // DEBUG
