@@ -65,3 +65,7 @@ uint32_t getMicroseconds<TimeResolution::Microseconds>(uint32_t ticks)
 {
     return ticks;
 }
+
+// for use in templates
+#define ToMilliseconds(resolution, milliseconds) resolution == TimeResolution::Milliseconds ? milliseconds : ((uint32_t)milliseconds * 1000L)
+#define ToMicroseconds(resolution, microseconds) resolution == TimeResolution::Milliseconds ? ((uint32_t)microseconds / 1000L) : microseconds

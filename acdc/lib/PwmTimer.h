@@ -3,6 +3,114 @@
 #include <avr/io.h>
 #include "Port.h"
 
+#ifdef OCR0A
+
+/*
+ * Pwm timer for port-pins D6 (OC0A) and D5 (OC0B).
+ */
+class PwmTimer0
+{
+public:
+    enum class Channel : uint8_t
+    {
+        None = 0,
+        A = 0x47, // Address of OCR0A
+        B = 0x48, // Address of OCR0B
+    };
+
+    PwmTimer0()
+    {
+        init();
+        PowerReduction::Timer0(PowerState::On);
+    }
+
+    void Enable(Channel channel, bool enable = true)
+    {
+        if (channel == Channel::None)
+            return;
+
+        if (enable)
+        {
+            if (channel == Channel::A && !(TCCR0A & (1 << COM0A1)))
+            {
+                TCCR0A |= (1 << COM0A1); // Non-inverting mode
+            }
+            else if (channel == Channel::B && !(TCCR0A & (1 << COM0B1)))
+            {
+                TCCR0A |= (1 << COM0B1); // Non-inverting mode
+            }
+        }
+        else
+        {
+            if (channel == Channel::A)
+            {
+                TCCR0A &= ~((1 << COM0A1) | (1 << COM0A0)); // Disconnect OC0A
+                // Set the pin low manually
+                PORTD &= ~(1 << PORTD6);
+            }
+            else if (channel == Channel::B)
+            {
+                TCCR0A &= ~((1 << COM0B1) | (1 << COM0B0)); // Disconnect OC0B
+                // Set the pin low manually
+                PORTD &= ~(1 << PORTD5);
+            }
+        }
+    }
+
+    void SetOutputCompareValue(Channel channel, uint8_t value)
+    {
+        if (channel == Channel::None)
+            return;
+
+        // special case for turning off the PWM (value = 0)
+        if (value == 0)
+        {
+            Enable(channel, false);
+        }
+        else
+        {
+            Enable(channel, true);
+            _SFR_MEM8(channel) = value;
+        }
+    }
+
+    // clang-format off
+    constexpr Channel PortPinToChannel(PortPins portPin) const
+    {
+        return (portPin == PortPins::D6) 
+            ? Channel::A : (portPin == PortPins::D5)
+                ? Channel::B : Channel::None;
+    }
+
+    constexpr PortPins ChannelToPortPin(Channel channel) const
+    {
+        return (channel == Channel::A) 
+            ? PortPins::D6 : (channel == Channel::B) 
+                ? PortPins::D5 : PortPins::None;
+    }
+    // clang-format on
+
+private:
+    void init()
+    {
+        // Set Fast PWM mode (mode 3: WGM01=1, WGM00=1)
+        TCCR0A = (1 << WGM01) | (1 << WGM00);
+
+        // Set prescaler to 64 (same as Timer2)
+        TCCR0B = (1 << CS01) | (1 << CS00);
+
+        // No need to set COM0A1/COM0B1 here as they're handled in Enable()
+
+        // Set initial duty cycle to 0
+        OCR0A = 0;
+        OCR0B = 0;
+    }
+};
+
+#endif // OCR0A
+
+// ----------------------------------------------------------------------------
+
 #ifdef OCR2A
 
 /*

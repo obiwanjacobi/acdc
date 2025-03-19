@@ -44,7 +44,7 @@ public:
     }
 
     /** Enables (true) or disables (false) the receiver interrupt.
-     *  When turning on interrupts you also have to implement the `ISR(USARTn_RX_vect)` interrupt handler.
+     *  When turning on interrupts you also have to implement the `ISR(USART[n]_RX_vect)` interrupt handler.
      *  \param enable indicates the state.
      */
     void setEnableIsCompleteInterrupt(bool enable = true)

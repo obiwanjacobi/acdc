@@ -15,22 +15,25 @@ public:
     PwmOutputPin(PwmTimerT *pwmTimer)
         : _pwmTimer(pwmTimer)
     {
-        _channel = _pwmTimer->PortPinToChannel(PortPinId);
         PortPin<PortPinId>::SetDirection(PinIO::Output);
-        _pwmTimer->SetOutputCompareValue(_channel, 0);
+        typename PwmTimerT::Channel channel = _pwmTimer->PortPinToChannel(PortPinId);
+        _pwmTimer->SetOutputCompareValue(channel, 0);
     }
 
     void Attach(PwmTimerT *pwmTimer)
     {
         _pwmTimer = pwmTimer;
-        _channel = _pwmTimer->PortPinToChannel(PortPinId);
-        _pwmTimer->SetOutputCompareValue(_channel, 0);
+        typename PwmTimerT::Channel channel = _pwmTimer->PortPinToChannel(PortPinId);
+        _pwmTimer->SetOutputCompareValue(channel, 0);
     }
 
     void Write(uint8_t dutyCycle)
     {
         if (_pwmTimer)
-            _pwmTimer->SetOutputCompareValue(_channel, dutyCycle);
+        {
+            typename PwmTimerT::Channel channel = _pwmTimer->PortPinToChannel(PortPinId);
+            _pwmTimer->SetOutputCompareValue(channel, dutyCycle);
+        }
     }
 
     PortPins getPortPin() const
@@ -40,5 +43,4 @@ public:
 
 private:
     PwmTimerT *_pwmTimer;
-    typename PwmTimerT::Channel _channel;
 };

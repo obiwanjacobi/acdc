@@ -18,7 +18,6 @@ public:
         Set(PRR, PRUSART0, state);
     }
 #endif
-
     static void Timer0(PowerState state)
     {
         Set(PRR, PRTIM0, state);

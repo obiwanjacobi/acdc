@@ -74,7 +74,7 @@ public:
     }
 
     /** Enables (true) or disables (false) the transmitter complete interrupt.
-     *  When turning on interrupts you also have to implement the `ISR(USARTn_TX_vect)` interrupt handler.
+     *  When turning on interrupts you also have to implement the `ISR(USART[n]_TX_vect)` interrupt handler.
      *  This interrupt is most useful when implementing half-duplex communication where after transmitting,
      *  the receiver has to be switched on.
      *  \param enable indicates the state.
@@ -93,7 +93,7 @@ public:
     }
 
     /** Enables (true) or disables (false) the transmitter accept data interrupt.
-     *  When turning on interrupts you also have to implement the `ISR(USARTn_UDRE_vect)` interrupt handler.
+     *  When turning on interrupts you also have to implement the `ISR(USART[n]_UDRE_vect)` interrupt handler.
      *  \param enable indicates the state.
      */
     void setEnableAcceptDataInterrupt(bool enable = true)

@@ -10,7 +10,7 @@
  *
  *  For each item (times MaxItems) the size of uint16_t and TimeUnitT is pre-allocated (default 4 bytes per item).
  */
-template <class TimeT, const uint8_t MaxItems, typename TimeUnitT = uint16_t>
+template <class TimeT, const uint8_t MaxItems, typename TimeUnitT = uint32_t>
 class Delays : public TimeT
 {
 public:
@@ -44,7 +44,7 @@ public:
      *  \param id is the identification of the delay.
      *  \return Returns the delay time in units the TimeT was constructed with.
      */
-    static TimeUnitT DelayValue(uint16_t id)
+    static TimeUnitT getDelayValue(uint16_t id)
     {
         for (int i = 0; i < MaxItems; i++)
         {
@@ -134,6 +134,11 @@ public:
     /** The invalid id value.
      */
     static uint16_t InvalidId;
+
+    static TimeUnitT getDelta()
+    {
+        return _delta;
+    }
 
 private:
     static TimeUnitT _delta;

@@ -11,6 +11,10 @@ template <const TimeResolution ResolutionId>
 class Time
 {
 public:
+    /** Starts the time counter.
+     */
+    static void Start() { TimerCounter2::Start(); }
+
     /** Captures the time ticks.
      *  \return Returns delta-time in 'resolution'
      */
@@ -37,6 +41,21 @@ public:
         return _ticks;
     }
 
+    static uint32_t TimeForMilliseconds(uint32_t milliseconds)
+    {
+        return ::getMilliseconds<ResolutionId>(milliseconds);
+    }
+
+    static uint32_t TimeForMicroseconds(uint32_t microseconds)
+    {
+        return ::getMicroseconds<ResolutionId>(microseconds);
+    }
+
+    static TimeResolution getResolution()
+    {
+        return ResolutionId;
+    }
+
 private:
     Time() {}
     static uint32_t _ticks;
@@ -52,7 +71,7 @@ template <>
 uint32_t Time<TimeResolution::Microseconds>::Update()
 {
     uint32_t previous = _ticks;
-    _ticks = TimerCounter0::getMicroseconds();
+    _ticks = TimerCounter2::getMicroseconds();
     return _ticks - previous;
 }
 
@@ -63,6 +82,6 @@ template <>
 uint32_t Time<TimeResolution::Milliseconds>::Update()
 {
     uint32_t previous = _ticks;
-    _ticks = TimerCounter0::getMilliseconds();
+    _ticks = TimerCounter2::getMilliseconds();
     return _ticks - previous;
 }

@@ -18,10 +18,12 @@ enum class CommandType : uint8_t
     TrackMode
 };
 
-template <class BaseT>
+template <class BaseT, typename CtorParamsT>
 class CommandDispatcher : public BaseT
 {
 public:
+    CommandDispatcher(CtorParamsT &params) : BaseT(params) {}
+
     bool Dispatch(CommandType command, const uint8_t *params, uint8_t count)
     {
         switch (command)
@@ -62,8 +64,8 @@ public:
         Clear();
     }
 
-    template <class T>
-    bool Dispatch(CommandDispatcher<T> &dispatcher)
+    template <class DispatcherT>
+    bool Dispatch(DispatcherT &dispatcher)
     {
         if (IsComplete())
         {

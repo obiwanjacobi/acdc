@@ -6,6 +6,8 @@
 #include "../lib/Port.h"
 #include "../lib/PwmTimer.h"
 #include "../lib/PwmOutputPin.h"
+#include "../lib/ServoTimer.h"
+#include "../lib/ServoOutputPin.h"
 #include "../lib/atl/Debug.h"
 #include "../lib/atl/Delays.h"
 #include "../lib/atl/FixedString.h"
@@ -17,33 +19,91 @@
 #include "Serial.h"
 #include "PwmTask.h"
 #include "Commands.h"
+#include "MotorController.h"
 #include "CommandHandler.h"
+
+const uint8_t MaxItems = 5;
+#define TimeRes TimeResolution::Milliseconds
+typedef Delays<Time<TimeRes>, MaxItems> Scheduler;
+
+Serial serial;
+
+TimeoutTask<ToggleOutputPinTask<PortPins::B5>, Scheduler, ToMilliseconds(TimeRes, 300)> blinkLedTask;
 
 PwmTimer2 pwmTimer2;
 PwmOutputPin<PwmTimer2, PortPins::D3> pwmOutputPin(&pwmTimer2);
-
-const uint8_t MaxItems = 5;
-typedef Delays<Time<TimeResolution::Milliseconds>, MaxItems> Scheduler;
-
+// PwmOutputPin<PwmTimer2, PortPins::B3> pwmOutputPin2(&pwmTimer2);
 PwmTask<Scheduler, PwmOutputPin<PwmTimer2, PortPins::D3>, 10> pwmTask;
-Serial serial;
 
-TimeoutTask<ToggleOutputPinTask<PortPins::B5>, Scheduler, 300> blinkLedTask;
+ServoTimer1 servoTimer;
+Servo360OutputPin<ServoTimer1, PortPins::B1> pwmServo1Pin(&servoTimer);
+Servo360OutputPin<ServoTimer1, PortPins::B2> pwmServo2Pin(&servoTimer);
 
 uint8_t _pwm = 0;
 const char welcomeMsg[] PROGMEM = "AC/DC v1.0";
 const char debugMsg[] PROGMEM = "Debug is enabled";
 
+CommandHandlerParams commandHanlderParams = {
+    &serial.Transmit};
 CommandParser<RingBufferFast<char, 16>> commandParser;
-CommandDispatcher<CommandHandler<SerialWriter>> commandDispatcher;
+typedef CommandDispatcher<CommandHandler, CommandHandlerParams> CommandDispatcher_t;
+CommandDispatcher_t commandDispatcher(commandHanlderParams);
 
 class Program
 {
 public:
+    void Run()
+    {
+        Scheduler::Update();
+
+        // indication that the program is running
+        blinkLedTask.Run();
+
+        PortPin<PortPins::D4>::Toggle();
+
+        while (serial.Receive.getCount() > 0)
+        {
+            uint8_t data;
+            if (serial.Receive.TryRead(&data))
+            {
+                // serial echo
+                serial.Transmit.Write((const char)data);
+
+                bool parsed = commandParser.Parse(data);
+                // serial.Transmit.WriteLine(parsed ? " ok" : " nok");
+                if (parsed)
+                {
+                    if (commandParser.IsError())
+                    {
+                        serial.Transmit.Write("<X>");
+                        commandParser.Clear();
+                    }
+                    else if (commandParser.IsComplete())
+                    {
+                        if (commandParser.Dispatch<CommandDispatcher_t>(commandDispatcher))
+                        {
+                            serial.Transmit.Write("<OK>");
+                        }
+                        else
+                        {
+                            serial.Transmit.Write("<NOK>");
+                        }
+                        commandParser.Clear();
+                    }
+                }
+                else
+                {
+                    // data not parsed by protocol
+                }
+            }
+        }
+    }
+
     void Initialize()
     {
-        // Start the timer that powers Time<TimeResolution>
-        TimerCounter0::Start();
+        // Start the timer that powers Time<TimeResolution> / Scheduler
+        Scheduler::Start();
+
         // open serial port (usart)
         if (!serial.Open(BaudRates::Baud115200))
         {
@@ -65,60 +125,8 @@ public:
         temp.CopyFromProgMem(debugMsg);
         LogDebug(temp);
 
-        commandDispatcher.SetTextWriter(&serial.Transmit);
-    }
-
-    void Run()
-    {
-        Scheduler::Update();
-
-        // indication that the program is running
-        blinkLedTask.Run();
-
-        while (serial.Receive.getCount() > 0)
-        {
-            uint8_t data;
-            if (serial.Receive.TryRead(&data))
-            {
-                // serial echo
-                serial.Transmit.Write((const char)data);
-
-                bool parsed = commandParser.Parse(data);
-                // serial.Transmit.WriteLine(parsed ? " ok" : " nok");
-                if (parsed)
-                {
-                    if (commandParser.IsError())
-                    {
-                        serial.Transmit.Write("<X>");
-                        commandParser.Clear();
-                    }
-                    else if (commandParser.IsComplete())
-                    {
-                        if (commandParser.Dispatch(commandDispatcher))
-                        {
-                            serial.Transmit.Write("<OK>");
-                        }
-                        else
-                        {
-                            serial.Transmit.Write("<NOK>");
-                        }
-                        commandParser.Clear();
-                    }
-                }
-
-                switch (data)
-                {
-                case 'u':
-                    _pwm += 10;
-                    pwmOutputPin.Write(_pwm);
-                    break;
-                case 'd':
-                    _pwm -= 10;
-                    pwmOutputPin.Write(_pwm);
-                    break;
-                }
-            }
-        }
+        pwmServo1Pin.SetSpeed(0);
+        pwmServo2Pin.SetSpeed(0);
     }
 };
 
@@ -134,6 +142,16 @@ int main()
     }
 
     return 0;
+}
+
+// ISR(TIMER1_OVF_vect)
+// {
+//     TimerCounter1::OnTimerOverflowInterrupt();
+// }
+
+ISR(TIMER2_OVF_vect)
+{
+    TimerCounter2::OnTimerOverflowInterrupt();
 }
 
 ISR(USART_RX_vect)

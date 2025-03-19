@@ -1,13 +1,20 @@
 #pragma once
 #include <stdint.h>
 
-template <class TextWriterT>
+struct CommandHandlerParams
+{
+    // for writing back responses on executed commands
+    SerialWriter *writer;
+    //MotorController *motorController;
+};
+
 class CommandHandler
 {
 public:
-    void SetTextWriter(TextWriterT *writer)
+    CommandHandler(CommandHandlerParams &params)
     {
-        _writer = writer;
+        _writer = params.writer;
+        //_motorController = params.motorController;
     }
 
     void OnPower(bool on, uint8_t track)
@@ -19,5 +26,6 @@ public:
     }
 
 private:
-    TextWriterT *_writer;
+    SerialWriter *_writer;
+    //MotorController *_motorController;
 };
