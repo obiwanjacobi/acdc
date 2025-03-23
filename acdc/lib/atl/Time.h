@@ -3,6 +3,15 @@
 #include "TimeResolution.h"
 #include "../TimerCounter.h"
 
+typedef TimerCounter0 TimerCounterT;
+
+ISR(TIMER0_OVF_vect)
+// ISR(TIMER1_OVF_vect)
+// ISR(TIMER2_OVF_vect)
+{
+    TimerCounterT::OnTimerOverflowInterrupt();
+}
+
 /** The Time class keeps track of time ticks (either milli- or micro-seconds).
  *  Time is a static class and cannot be instantiated.
  *  \tparam TimeResolution indicates the units of time.
@@ -13,7 +22,7 @@ class Time
 public:
     /** Starts the time counter.
      */
-    static void Start() { TimerCounter2::Start(); }
+    static void Start() { TimerCounterT::Start(); }
 
     /** Captures the time ticks.
      *  \return Returns delta-time in 'resolution'
@@ -71,7 +80,7 @@ template <>
 uint32_t Time<TimeResolution::Microseconds>::Update()
 {
     uint32_t previous = _ticks;
-    _ticks = TimerCounter2::getMicroseconds();
+    _ticks = TimerCounterT::getMicroseconds();
     return _ticks - previous;
 }
 
@@ -82,6 +91,6 @@ template <>
 uint32_t Time<TimeResolution::Milliseconds>::Update()
 {
     uint32_t previous = _ticks;
-    _ticks = TimerCounter2::getMilliseconds();
+    _ticks = TimerCounterT::getMilliseconds();
     return _ticks - previous;
 }

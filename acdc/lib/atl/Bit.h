@@ -139,13 +139,15 @@ public:
 
         T mask = getMask<T>(bitIndex);
 
-        // clear bit
-        target &= ~mask;
-
         if (value)
         {
             // set bit
             target |= mask;
+        }
+        else
+        {
+            // clear bit
+            target &= ~mask;
         }
     }
 

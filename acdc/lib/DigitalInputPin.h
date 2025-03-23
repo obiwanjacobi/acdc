@@ -29,7 +29,7 @@ public:
      */
     void EnableInternalPullup(bool enable = true)
     {
-        PortPin<PortPinId>::EnablePullup(PinId, enable);
+        PortPin<PortPinId>::EnablePullup(PortPinId, enable);
     }
 
     /*

@@ -30,6 +30,10 @@ public:
     {
         Set(PRR, PRTIM2, state);
     }
+    static void Twi(PowerState state)
+    {
+        Set(PRR, PRTWI, state);
+    }
 #endif // PRR
 
 #ifdef PRR0

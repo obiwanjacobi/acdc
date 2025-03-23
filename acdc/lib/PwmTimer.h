@@ -96,7 +96,7 @@ private:
         // Set Fast PWM mode (mode 3: WGM01=1, WGM00=1)
         TCCR0A = (1 << WGM01) | (1 << WGM00);
 
-        // Set prescaler to 64 (same as Timer2)
+        // Set prescaler to 64
         TCCR0B = (1 << CS01) | (1 << CS00);
 
         // No need to set COM0A1/COM0B1 here as they're handled in Enable()

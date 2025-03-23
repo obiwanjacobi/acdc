@@ -3,53 +3,20 @@
 #include "../lib/atl/FixedArray.h"
 #include "../lib/atl/Debug.h"
 
-enum class ParserError : uint8_t
-{
-    NoError,
-    InvalidCommand,
-    InvalidParameter
-};
-
-enum class CommandType : uint8_t
-{
-    None,
-    Power,
-    Status,
-    TrackMode
-};
-
-template <class BaseT, typename CtorParamsT>
-class CommandDispatcher : public BaseT
-{
-public:
-    CommandDispatcher(CtorParamsT &params) : BaseT(params) {}
-
-    bool Dispatch(CommandType command, const uint8_t *params, uint8_t count)
-    {
-        switch (command)
-        {
-        case CommandType::Power:
-            Trace("Dispatch: OnPower");
-            BaseT::OnPower(params[0] == 1, params[1]);
-            return true;
-        default:
-            return false;
-        }
-    }
-
-private:
-    void Trace(const char *message)
-    {
-        Debug<2>::Log<DebugLevel::Trace>(message);
-    }
-};
-
 // -----------------------------------------------------------------------------
 
 template <class BufferT>
-class CommandParser
+class DccExCommandParser
 {
 public:
+    enum class CommandType : uint8_t
+    {
+        None,
+        Power,
+        Status,
+        TrackMode
+    };
+
     enum class ParserState : uint8_t
     {
         Idle,
@@ -59,7 +26,7 @@ public:
         Error
     };
 
-    CommandParser()
+    DccExCommandParser()
     {
         Clear();
     }
