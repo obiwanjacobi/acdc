@@ -1,13 +1,12 @@
 #pragma once
 #include <stdint.h>
 #include "atl/Bit.h"
+#include "atl/Debug.h"
+#include "atl/StringUtils.h"
+#include <Serial.h>
 
 // https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library/blob/master/Adafruit_PWMServoDriver.cpp
 // https://github.com/adafruit/Adafruit_BusIO/blob/master/Adafruit_I2CDevice.cpp
-
-#define CheckResult(result)      \
-    if (I2cT::HasFailed(result)) \
-        return result;
 
 #define PCA9685_MODE1 0x00
 #define PCA9685_MODE2 0x01
@@ -48,11 +47,26 @@
 #define PCA9685_I2C_DEFAULT_ADDRESS 0x40
 #define PCA9685_FREQUENCY 25000000
 
+extern Serial serial;
+
 template <class I2cT, const uint8_t Address>
 class PCA9685
 {
+#define CheckResult(result, value)  \
+    if (I2cT::HasFailed(result))    \
+    {                               \
+        serial.Transmit.Write("-"); \
+        return value;               \
+    }                               \
+    else                            \
+    {                               \
+        serial.Transmit.Write("+"); \
+    }
+
 public:
-    PCA9685() {}
+    PCA9685()
+    {
+    }
 
     enum class Pins
     {
@@ -80,14 +94,33 @@ public:
         External = 1
     };
 
-    // does not open Twi
-    void Open(uint16_t prescale, ClockSource clockSource = ClockSource::Internal)
+    // does not open Twi/I2c
+    bool Open(uint16_t prescale, ClockSource clockSource = ClockSource::Internal)
     {
-        // set sleep mode
-        // set prescale
+        // set sleep mode and auto increment
+        uint8_t mode1 = (1 << PCA9685_MODE1_SLEEP);
+        auto result = I2cT::WriteRegister(Address, PCA9685_MODE1, mode1);
+        CheckResult(result, false);
+
         // set clock source
-        // set auto increment
+        if (clockSource == ClockSource::External)
+        {
+            mode1 |= (1 << PCA9685_MODE1_EXTCLK);
+            result = I2cT::WriteRegister(Address, PCA9685_MODE1, mode1);
+            CheckResult(result, false);
+        }
+
+        // set prescale
+        result = I2cT::WriteRegister(Address, PCA9685_PRESCALE, prescale);
+        CheckResult(result, false);
+
         // clear sleep mode
+        mode1 &= ~(1 << PCA9685_MODE1_SLEEP);
+        mode1 |= (1 << PCA9685_MODE1_AI) | (1 << PCA9685_MODE1_RESTART);
+        result = I2cT::WriteRegister(Address, PCA9685_MODE1, mode1);
+        CheckResult(result, false);
+
+        return true;
     }
 
     // dutyCycle value: 0-4095
@@ -106,17 +139,17 @@ public:
         // fullOff LEDn_OFF_H:4 = 0b1
 
         TwiResult result = I2cT::Start(Address, false);
-        CheckResult(result);
+        CheckResult(result, false);
         result = I2cT::Write(PCA9685_LED0_ON_L + (uint8_t)pin * 4);
-        CheckResult(result);
+        CheckResult(result, false);
         result = I2cT::Write(on & 0xFF);
-        CheckResult(result);
+        CheckResult(result, false);
         result = I2cT::Write(on >> 8);
-        CheckResult(result);
+        CheckResult(result, false);
         result = I2cT::Write(off & 0xFF);
-        CheckResult(result);
+        CheckResult(result, false);
         result = I2cT::Write(off >> 8);
-        CheckResult(result);
+        CheckResult(result, false);
         I2cT::Stop();
 
         return true;
@@ -124,29 +157,103 @@ public:
 
     void Sleep()
     {
-        uint8_t mode1 = ReadMode1();
-        BitFlag::Set(mode1, PCA9685_MODE1_SLEEP, true);
-        WriteMode1(mode1);
+        uint8_t mode1 = 0;
+        if (TryReadMode1(&mode1))
+        {
+            BitFlag::Set(mode1, PCA9685_MODE1_SLEEP, true);
+            WriteMode1(mode1);
+        }
     }
     void WakeUp()
     {
-        uint8_t mode1 = ReadMode1();
-        BitFlag::Set(mode1, PCA9685_MODE1_SLEEP, false);
-        WriteMode1(mode1);
+        uint8_t mode1 = 0;
+        if (TryReadMode1())
+        {
+            BitFlag::Set(mode1, PCA9685_MODE1_SLEEP, false);
+            WriteMode1(mode1);
+        }
     }
 
-    enum class OutputMode : uint8_t
+    // how are the outputs driven
+    enum class OutputDriver : uint8_t
     {
         OpenDrain = 0,
         PushPull = 1
     };
-    void setOutputMode(OutputMode)
+    // what happens when /OE is inactive
+    enum class OutputEnable : uint8_t
     {
+        // set output to zero
+        Off,
+        // output is high impedance
+        HighImpedance,
+        // OpenDrain=HighImpedance, PushPull=Off
+        OutputDriver,
+    };
+    // is the output level inverted
+    enum class OutputInverted : uint8_t
+    {
+        NotInverted = 0,
+        Inverted = 1,
+        // OpenDrain=Inverted, PushPull=NotInverted
+        OutputDriver = 2,
+    };
+    bool setOutputMode(OutputDriver outputDriver,
+                       OutputEnable outputEnable = OutputEnable::OutputDriver,
+                       OutputInverted outputInverted = OutputInverted::OutputDriver)
+    {
+        uint8_t mode2 = 0;
+        bool isTotem = outputDriver == OutputDriver::PushPull;
+
+        if (isTotem)
+        {
+            mode2 |= (1 << PCA9685_MODE2_OUTDRV);
+        }
+
+        switch (outputEnable)
+        {
+        case OutputEnable::OutputDriver:
+            mode2 |= (1 << PCA9685_MODE2_OUTNE_0);
+            break;
+        case OutputEnable::HighImpedance:
+            mode2 |= (1 << PCA9685_MODE2_OUTNE_1);
+            break;
+        default:
+            break;
+        }
+
+        if (outputInverted == OutputInverted::OutputDriver)
+        {
+            outputInverted = isTotem ? OutputInverted::NotInverted : OutputInverted::Inverted;
+        }
+        if (outputInverted == OutputInverted::Inverted)
+        {
+            mode2 |= (1 << PCA9685_MODE2_INVRT);
+        }
+
+        auto result = I2cT::WriteRegister(Address, PCA9685_MODE2, mode2);
+        CheckResult(result, false);
+        return true;
     }
 
 private:
-    uint8_t ReadPrescale()
+    bool TryReadPrescale(uint8_t *outData)
     {
-        return 0;
+        auto result = I2cT::TryReadRegister(Address, PCA9685_PRESCALE, outData);
+        CheckResult(result, false);
+        return true;
+    }
+    bool TryReadMode1(uint8_t *outData)
+    {
+        auto result = I2cT::TryReadRegister(Address, PCA9685_MODE1, outData);
+        CheckResult(result, false);
+        return true;
+    }
+
+    bool WriteMode1(uint8_t data)
+    {
+        auto result = I2cT::WriteRegister(Address, PCA9685_MODE1, data);
+        CheckResult(result, false);
+        return true;
     }
 };

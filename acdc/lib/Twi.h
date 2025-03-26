@@ -20,7 +20,7 @@ enum class TwiResult : uint8_t
     DataFailed
 };
 
-#define CheckResult(result)      \
+#define PromoteFailure(result)   \
     if (TwiT::HasFailed(result)) \
         return result;
 
@@ -166,19 +166,19 @@ private:
 };
 
 template <class TwiT = Twi>
-class TwiTransmit
+class TwiTransmit : public TwiT
 {
 public:
-    static TwiResult WriteRegister(uint8_t address, uint8_t register, uint8_t data)
+    static TwiResult WriteRegister(uint8_t address, uint8_t reg, uint8_t data)
     {
         TwiResult result = TwiT::Start(address, false);
-        CheckResult(result);
+        PromoteFailure(result);
 
-        result = TwiT::Write(register);
-        CheckResult(result);
+        result = TwiT::Write(reg);
+        PromoteFailure(result);
 
         result = TwiT::Write(data);
-        CheckResult(result);
+        PromoteFailure(result);
 
         TwiT::Stop();
 
@@ -190,20 +190,20 @@ private:
 };
 
 template <class TwiT = Twi>
-class TwiReceive
+class TwiReceive : public TwiT
 {
 
 public:
-    static TwiResult TryReadRegister(uint8_t address, uint8_t register, uint8_t *outData)
+    static TwiResult TryReadRegister(uint8_t address, uint8_t reg, uint8_t *outData)
     {
         TwiResult result = TwiT::Start(address, false);
-        CheckResult(result);
+        PromoteFailure(result);
 
-        result = TwiT::Write(register);
-        CheckResult(result);
+        result = TwiT::Write(reg);
+        PromoteFailure(result);
 
         result = TwiT::Start(address, true);
-        CheckResult(result);
+        PromoteFailure(result);
 
         *outData = TwiT::ReadNack();
 

@@ -209,7 +209,8 @@ public:
     // Returns false when pin is not an input.
     static bool EnablePullup(bool enable = true)
     {
-        uint8_t mask = Bit<(uint8_t)PinId>::getMask();
+        // weirdest syntax ever 'template'
+        uint8_t mask = Bit<(uint8_t)PinId>::template getMask<uint8_t>();
 
         if ((PortRegisters<PortId>::Dir() & mask) == Input)
         {

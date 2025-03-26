@@ -9,6 +9,8 @@
 #include "../lib/PwmOutputPin.h"
 #include "../lib/ServoTimer.h"
 #include "../lib/ServoOutputPin.h"
+#include "../lib/Twi.h"
+#include "../lib/PCA9685.h"
 #include "../lib/atl/Debug.h"
 #include "../lib/atl/Delays.h"
 #include "../lib/atl/FixedString.h"
@@ -21,19 +23,18 @@
 #include "PwmTask.h"
 #include "CommandParser.h"
 #include "CommandHandler.h"
+#include <ReadWithState.h>
 
 const uint8_t MaxItems = 5;
 #define TimeRes TimeResolution::Milliseconds
 typedef Delays<Time<TimeRes>, MaxItems> Scheduler;
 
 Serial serial;
-// TimeoutTask<ToggleOutputPinTask<PortPins::B5>, Scheduler, ToMilliseconds(TimeRes, 300)> blinkLedTask;
+TimeoutTask<ToggleOutputPinTask<PortPins::B5>, Scheduler, ToMilliseconds(TimeRes, 300)> blinkLedTask;
 
 // ServoTimer1 servoTimer;
 // Servo360OutputPin<ServoTimer1, PortPins::B1> pwmServo1Pin(&servoTimer);
 // Servo360OutputPin<ServoTimer1, PortPins::B2> pwmServo2Pin(&servoTimer);
-
-DigitalInputPin<PortPins::D2> sensor1;
 
 uint8_t _pwm = 0;
 const char welcomeMsg[] PROGMEM = "AC/DC v1.0";
@@ -41,7 +42,13 @@ const char debugMsg[] PROGMEM = "Debug is enabled";
 
 CommandParser<CommandHandler> commandParser;
 
-bool sensor1State = false;
+ReadWithState<DigitalInputPin<PortPins::D2>, bool> sensor1;
+ReadWithState<DigitalInputPin<PortPins::D4>, bool> sensor2;
+ReadWithState<DigitalInputPin<PortPins::D5>, bool> sensor3;
+ReadWithState<DigitalInputPin<PortPins::D6>, bool> sensor4;
+
+typedef PCA9685<TwiReceive<TwiTransmit<Twi>>, 0x40> PwmModuleT;
+PwmModuleT pwmModule;
 
 class Program
 {
@@ -51,16 +58,36 @@ public:
         Scheduler::Update();
 
         // indication that the program is running
-        // blinkLedTask.Run();
+        blinkLedTask.Run();
 
-        bool value = sensor1.Read();
-        if (sensor1State != value)
+        // ReadSensors();
+        // ReadSerial();
+    }
+
+    void ReadSensors()
+    {
+        bool value = false;
+        if (sensor1.TryRead(&value))
         {
-            sensor1State = value;
             commandParser.OnDirection(false);
+            serial.Transmit.Write("O1:");
+            serial.Transmit.WriteLine(value);
         }
-
-        ReadSerial();
+        if (sensor2.TryRead(&value))
+        {
+            serial.Transmit.Write("O2:");
+            serial.Transmit.WriteLine(value);
+        }
+        if (sensor3.TryRead(&value))
+        {
+            serial.Transmit.Write("O3:");
+            serial.Transmit.WriteLine(value);
+        }
+        if (sensor4.TryRead(&value))
+        {
+            serial.Transmit.Write("O4:");
+            serial.Transmit.WriteLine(value);
+        }
     }
 
     void ReadSerial()
@@ -105,15 +132,23 @@ public:
         // open serial port (usart)
         if (!serial.Open(BaudRates::Baud115200))
         {
-            // blinkLedTask.Write(true);
-            while (1)
-            {
-                // stop here
-            }
+            Stop();
         }
 
         // finally enable global interrupts
         Interupts::Enable();
+
+        auto result = Twi::Open(I2cFrequency::Normal);
+        if (result != TwiResult::Ok)
+            Stop();
+
+        if (pwmModule.Open(50))
+        {
+            pwmModule.setOutputMode(PwmModuleT::OutputDriver::PushPull);
+            pwmModule.Write(PwmModuleT::Pins::Pin0, 3000);
+        }
+        else
+            Stop();
 
         FixedString<20> temp;
         // welcome message
@@ -122,6 +157,15 @@ public:
 
         temp.CopyFromProgMem(debugMsg);
         LogDebug(temp);
+    }
+
+    void Stop()
+    {
+        blinkLedTask.Write(true);
+        while (1)
+        {
+            // stop here
+        }
     }
 };
 
