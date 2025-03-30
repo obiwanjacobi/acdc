@@ -7,46 +7,44 @@ enum class Direction
     Backward
 };
 
-template <class PwmPinT, class DirectionPinT, class BreakPinT, class SensePinT>
-class MotorController
+template <class BaseT>
+class MotorController : public BaseT
 {
 public:
-    // only the pwm pin is passed in because it takes a reference to a pwm-timer,
-    // which is constructed outside this class.
-    MotorController(PwmPinT *pwmPin)
-        : _pwmPin(pwmPin)
+    MotorController()
+        : _dir(Direction::Forward)
     {
     }
 
-    void PowerOn(bool on)
+    void setPower(bool on)
     {
-        _pwmPin->Write(0);
-        _breakPin.Write(!on);
-        _directionPin.Write(false);
+        if (!on)
+            BaseT::Stop();
     }
-    void Direction(Direction direction)
+
+    void setDirection(Direction direction)
     {
-        _directionPin.Write(direction == Direction::Forward);
+        _dir = direction;
     }
-    void Speed(uint8_t speed)
+
+    void setSpeed(uint8_t speed)
     {
-        _breakPin.Write(speed == 0);
-        _pwmPin->Write(speed);
+        if (_dir == Direction::Forward)
+            BaseT::CounterClockwise(speed);
+        else
+            BaseT::Clockwise(speed);
     }
+
     void Stop()
     {
-        _pwmPin->Write(0);
-        _breakPin.Write(true);
+        BaseT::Stop();
     }
 
     uint16_t getCurrent()
     {
-        return _sensePin.Read();
+        return 0;
     }
 
 private:
-    PwmPinT *_pwmPin;
-    DirectionPinT _directionPin;
-    BreakPinT _breakPin;
-    SensePinT _sensePin;
+    Direction _dir;
 };

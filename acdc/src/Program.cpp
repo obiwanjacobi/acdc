@@ -2,6 +2,8 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
+// #include <utils/delay.h>
+
 #include "../lib/DigitalInputPin.h"
 #include "../lib/Interupt.h"
 #include "../lib/Port.h"
@@ -11,6 +13,8 @@
 #include "../lib/ServoOutputPin.h"
 #include "../lib/Twi.h"
 #include "../lib/PCA9685.h"
+#include "../lib/INA219.h"
+
 #include "../lib/atl/Debug.h"
 #include "../lib/atl/Delays.h"
 #include "../lib/atl/FixedString.h"
@@ -42,13 +46,14 @@ const char debugMsg[] PROGMEM = "Debug is enabled";
 
 CommandParser<CommandHandler> commandParser;
 
-ReadWithState<DigitalInputPin<PortPins::D2>, bool> sensor1;
-ReadWithState<DigitalInputPin<PortPins::D4>, bool> sensor2;
-ReadWithState<DigitalInputPin<PortPins::D5>, bool> sensor3;
-ReadWithState<DigitalInputPin<PortPins::D6>, bool> sensor4;
+// ReadWithState<DigitalInputPin<PortPins::D2>, bool> sensor1;
+// ReadWithState<DigitalInputPin<PortPins::D4>, bool> sensor2;
+// ReadWithState<DigitalInputPin<PortPins::D5>, bool> sensor3;
+// ReadWithState<DigitalInputPin<PortPins::D6>, bool> sensor4;
 
-typedef PCA9685<TwiReceive<TwiTransmit<Twi>>, 0x40> PwmModuleT;
-PwmModuleT pwmModule;
+// 0100_0001
+typedef INA219<I2cT, 0x41> Ina219T;
+int16_t shunt = 0;
 
 class Program
 {
@@ -60,35 +65,43 @@ public:
         // indication that the program is running
         blinkLedTask.Run();
 
+        int16_t val = 0;
+        if (Ina219T::TryReadShuntVoltage(&val) && shunt != val && val > 100)
+        {
+            serial.Transmit.Write("C");
+            serial.Transmit.WriteLine(val);
+            shunt = val;
+        }
+
         // ReadSensors();
-        // ReadSerial();
+        ReadSerial();
     }
 
-    void ReadSensors()
-    {
-        bool value = false;
-        if (sensor1.TryRead(&value))
-        {
-            commandParser.OnDirection(false);
-            serial.Transmit.Write("O1:");
-            serial.Transmit.WriteLine(value);
-        }
-        if (sensor2.TryRead(&value))
-        {
-            serial.Transmit.Write("O2:");
-            serial.Transmit.WriteLine(value);
-        }
-        if (sensor3.TryRead(&value))
-        {
-            serial.Transmit.Write("O3:");
-            serial.Transmit.WriteLine(value);
-        }
-        if (sensor4.TryRead(&value))
-        {
-            serial.Transmit.Write("O4:");
-            serial.Transmit.WriteLine(value);
-        }
-    }
+    // void ReadSensors()
+    // {
+    //     bool value = false;
+    //     if (sensor1.TryRead(&value))
+    //     {
+    //         commandParser.OnDirection(false);
+    //         serial.Transmit.Write("O1:");
+    //         serial.Transmit.WriteLine(value);
+    //     }
+    //     if (sensor2.TryRead(&value))
+    //     {
+    //         serial.Transmit.Write("O2:");
+    //         serial.Transmit.WriteLine(value);
+    //     }
+    //     if (sensor3.TryRead(&value))
+    //     {
+    //         serial.Transmit.Write("O3:");
+    //         serial.Transmit.WriteLine(value);
+    //     }
+    //     if (sensor4.TryRead(&value))
+    //     {
+    //         serial.Transmit.Write("O4:");
+    //         serial.Transmit.WriteLine(value);
+    //     }
+    // }
 
     void ReadSerial()
     {
@@ -131,24 +144,20 @@ public:
 
         // open serial port (usart)
         if (!serial.Open(BaudRates::Baud115200))
-        {
-            Stop();
-        }
+            Stop(1);
 
-        // finally enable global interrupts
+        // enable global interrupts
         Interupts::Enable();
 
-        auto result = Twi::Open(I2cFrequency::Normal);
-        if (result != TwiResult::Ok)
-            Stop();
+        if (Twi::Open(I2cFrequency::Normal) != TwiResult::Ok)
+            Stop(2);
 
-        if (pwmModule.Open(50))
-        {
-            pwmModule.setOutputMode(PwmModuleT::OutputDriver::PushPull);
-            pwmModule.Write(PwmModuleT::Pins::Pin0, 3000);
-        }
-        else
-            Stop();
+        if (!PwmModuleT::Open(50) ||
+            !PwmModuleT::setOutputMode(PwmModuleT::OutputDriver::PushPull))
+            Stop(3);
+
+        if (!Ina219T::Open(7500))
+            Stop(4);
 
         FixedString<20> temp;
         // welcome message
@@ -159,12 +168,20 @@ public:
         LogDebug(temp);
     }
 
-    void Stop()
+    void Stop(uint8_t code)
     {
+        // do something with the code
+        // while (1)
+        // {
+        //     Scheduler::Update();
+        //     if (stopTask.Blink(code))
+        //         break;
+        // }
+
         blinkLedTask.Write(true);
+        // full stop
         while (1)
         {
-            // stop here
         }
     }
 };
