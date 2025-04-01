@@ -33,6 +33,19 @@ public:
         return false;
     }
 
+    bool TryTryRead(T *outState)
+    {
+        T current = 0;
+        if (BaseT::TryRead(&current) && current != _state)
+        {
+            _state = current;
+            *outState = current;
+            return true;
+        }
+
+        return false;
+    }
+
     T getState() const
     {
         return _state;

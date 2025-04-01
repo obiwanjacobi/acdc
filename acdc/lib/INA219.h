@@ -16,10 +16,10 @@
 template <class I2cT, const uint8_t Address>
 class INA219 : public I2cT
 {
-    static_assert((Address & 0x80) == 0, "INA219 Address highst bit (7) must be cleared. It is not used in I2C.");
+    static_assert((Address & 0x80) == 0, "INA219 Address highest bit (7) must be cleared. It is not used in I2C.");
 
 public:
-    const uint16_t DefaultAddress = 0b1000101;
+    const uint16_t DefaultAddress = 0x40;
 
     enum class BusVoltage : uint8_t
     {

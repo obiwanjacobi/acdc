@@ -45,7 +45,9 @@ public:
      */
     void Write(uint8_t data)
     {
-        _buffer.Write(data);
+        // keep retrying till the buffer has space
+        while (!_buffer.Write(data))
+            ;
     }
 
     /** Call this method from the `ISR(USARTn_UDRE_vect)` interrupt handler.

@@ -13,7 +13,7 @@
 
 // clang-format off
 typedef TwiReceive<TwiTransmit<Twi>> I2cT;
-typedef PCA9685<I2cT, 0x40> PwmModuleT;
+typedef PCA9685<I2cT, 0x46> PwmModuleT;
 
 template <const PCA9685_Pins PwmPinId, const PortPins In1PinId, const PortPins In2PinId>
 class MotorControllerT : public MotorController<

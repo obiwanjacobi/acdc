@@ -52,8 +52,15 @@ CommandParser<CommandHandler> commandParser;
 // ReadWithState<DigitalInputPin<PortPins::D6>, bool> sensor4;
 
 // 0100_0001
-typedef INA219<I2cT, 0x41> Ina219T;
-int16_t shunt = 0;
+typedef INA219<I2cT, 0x40> Ina219T_0;
+typedef INA219<I2cT, 0x41> Ina219T_1;
+typedef INA219<I2cT, 0x44> Ina219T_2;
+typedef INA219<I2cT, 0x45> Ina219T_3;
+
+int16_t shunt_0 = 0;
+int16_t shunt_1 = 0;
+int16_t shunt_2 = 0;
+int16_t shunt_3 = 0;
 
 class Program
 {
@@ -66,11 +73,29 @@ public:
         blinkLedTask.Run();
 
         int16_t val = 0;
-        if (Ina219T::TryReadShuntVoltage(&val) && shunt != val && val > 100)
+        if (Ina219T_0::TryReadShuntVoltage(&val) && shunt_0 != val && val > 100)
         {
-            serial.Transmit.Write("C");
-            serial.Transmit.WriteLine(val);
-            shunt = val;
+            serial.Transmit.Write("0");
+            //  serial.Transmit.WriteLine(val);
+            shunt_0 = val;
+        }
+        else if (Ina219T_1::TryReadShuntVoltage(&val) && shunt_1 != val && val > 100)
+        {
+            serial.Transmit.Write("1");
+            // serial.Transmit.WriteLine(val);
+            shunt_1 = val;
+        }
+        else if (Ina219T_2::TryReadShuntVoltage(&val) && shunt_2 != val && val > 100)
+        {
+            serial.Transmit.Write("2");
+            // serial.Transmit.WriteLine(val);
+            shunt_2 = val;
+        }
+        else if (Ina219T_3::TryReadShuntVoltage(&val) && shunt_3 != val && val > 100)
+        {
+            serial.Transmit.Write("3");
+            // serial.Transmit.WriteLine(val);
+            shunt_3 = val;
         }
 
         // ReadSensors();
@@ -156,8 +181,14 @@ public:
             !PwmModuleT::setOutputMode(PwmModuleT::OutputDriver::PushPull))
             Stop(3);
 
-        if (!Ina219T::Open(7500))
+        if (!Ina219T_0::Open(7500))
             Stop(4);
+        if (!Ina219T_1::Open(7500))
+            Stop(5);
+        if (!Ina219T_2::Open(7500))
+            Stop(6);
+        if (!Ina219T_3::Open(7500))
+            Stop(7);
 
         FixedString<20> temp;
         // welcome message
@@ -177,6 +208,12 @@ public:
         //     if (stopTask.Blink(code))
         //         break;
         // }
+
+        if (code > 1)
+        {
+            serial.Transmit.Write("Stop: ");
+            serial.Transmit.WriteLine(code);
+        }
 
         blinkLedTask.Write(true);
         // full stop
