@@ -27,7 +27,7 @@ public:
      */
     Task_Begin(Run)
     {
-        Task_YieldUntil(DelaysT::Wait(BaseT::getId(), Timeout));
+        Task_WaitUntil(DelaysT::Wait(BaseT::getId(), Timeout));
         BaseT::OnTimeout();
     }
     Task_End

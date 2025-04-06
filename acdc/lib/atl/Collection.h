@@ -144,5 +144,5 @@ protected:
 
 private:
     ArrayT _array;
-    uint16_t _count;
+    int16_t _count;
 };

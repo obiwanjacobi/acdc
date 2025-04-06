@@ -68,6 +68,7 @@ public:
             if (_ids[i] == id)
             {
                 _delays[i] = 0;
+                break;
             }
         }
     }
@@ -84,37 +85,45 @@ public:
     {
         if (id == InvalidId)
             return false;
+        if (time == 0)
+            return true;
 
         int emptyIndex = -1;
 
+        // try to find the id
         for (int i = 0; i < MaxItems; i++)
         {
-            if (emptyIndex == -1 && _ids[i] == InvalidId)
+            if (_ids[i] == InvalidId)
             {
-                emptyIndex = i;
+                if (emptyIndex == -1)
+                    emptyIndex = i;
                 continue;
             }
 
             if (_ids[i] == id)
             {
+                // check for done
                 if (_delta >= _delays[i])
                 {
                     _ids[i] = InvalidId;
                     return true;
                 }
 
+                // count down
                 _delays[i] -= _delta;
                 return false;
             }
         }
 
+        // id was not in the list
         if (emptyIndex != -1)
         {
             _ids[emptyIndex] = id;
             _delays[emptyIndex] = time;
         }
 
-        return false;
+        // if full - we say the delay is done (at least prog will not hang)
+        return emptyIndex == -1;
     }
 
     /** Removes the id from the listing.
@@ -127,6 +136,7 @@ public:
             if (_ids[i] == id)
             {
                 _ids[i] = InvalidId;
+                break;
             }
         }
     }

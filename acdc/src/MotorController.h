@@ -35,16 +35,6 @@ public:
             BaseT::Clockwise(speed);
     }
 
-    void Stop()
-    {
-        BaseT::Stop();
-    }
-
-    uint16_t getCurrent()
-    {
-        return 0;
-    }
-
 private:
     Direction _dir;
 };

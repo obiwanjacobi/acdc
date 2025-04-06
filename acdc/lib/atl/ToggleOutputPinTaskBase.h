@@ -3,7 +3,7 @@
 #include "../DigitalOutputPin.h"
 
 template <const PortPins PortPinId>
-class ToggleOutputPinTask : public IdentifiableObject<DigitalOutputPin<PortPinId>>
+class ToggleOutputPinTaskBase : public IdentifiableObject<DigitalOutputPin<PortPinId>>
 {
     typedef IdentifiableObject<DigitalOutputPin<PortPinId>> BaseT;
 

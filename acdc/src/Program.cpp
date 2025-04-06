@@ -21,26 +21,26 @@
 #include "../lib/atl/Time.h"
 #include "../lib/atl/TimeResolution.h"
 #include "../lib/atl/TimeoutTask.h"
-#include "../lib/atl/ToggleOutputPinTask.h"
+#include "../lib/atl/ToggleOutputPinTaskBase.h"
 
 #include "Serial.h"
 #include "PwmTask.h"
 #include "CommandParser.h"
 #include "CommandHandler.h"
 #include <ReadWithState.h>
+#include "BlockDriverTask.h"
 
 const uint8_t MaxItems = 5;
 #define TimeRes TimeResolution::Milliseconds
 typedef Delays<Time<TimeRes>, MaxItems> Scheduler;
 
 Serial serial;
-TimeoutTask<ToggleOutputPinTask<PortPins::B5>, Scheduler, ToMilliseconds(TimeRes, 300)> blinkLedTask;
+TimeoutTask<ToggleOutputPinTaskBase<PortPins::B5>, Scheduler, ToMilliseconds(TimeRes, 300)> blinkLedTask;
 
 // ServoTimer1 servoTimer;
 // Servo360OutputPin<ServoTimer1, PortPins::B1> pwmServo1Pin(&servoTimer);
 // Servo360OutputPin<ServoTimer1, PortPins::B2> pwmServo2Pin(&servoTimer);
 
-uint8_t _pwm = 0;
 const char welcomeMsg[] PROGMEM = "AC/DC v1.0";
 const char debugMsg[] PROGMEM = "Debug is enabled";
 
@@ -51,16 +51,11 @@ CommandParser<CommandHandler> commandParser;
 // ReadWithState<DigitalInputPin<PortPins::D5>, bool> sensor3;
 // ReadWithState<DigitalInputPin<PortPins::D6>, bool> sensor4;
 
-// 0100_0001
-typedef INA219<I2cT, 0x40> Ina219T_0;
-typedef INA219<I2cT, 0x41> Ina219T_1;
-typedef INA219<I2cT, 0x44> Ina219T_2;
-typedef INA219<I2cT, 0x45> Ina219T_3;
-
-int16_t shunt_0 = 0;
-int16_t shunt_1 = 0;
-int16_t shunt_2 = 0;
-int16_t shunt_3 = 0;
+BlockControllerT_0 blockController0;
+BlockControllerT_1 blockController1;
+BlockControllerT_2 blockController2;
+BlockControllerT_3 blockController3;
+BlockControllerTask<Scheduler> blockControllerTask;
 
 class Program
 {
@@ -72,34 +67,10 @@ public:
         // indication that the program is running
         blinkLedTask.Run();
 
-        int16_t val = 0;
-        if (Ina219T_0::TryReadShuntVoltage(&val) && shunt_0 != val && val > 100)
-        {
-            serial.Transmit.Write("0");
-            //  serial.Transmit.WriteLine(val);
-            shunt_0 = val;
-        }
-        else if (Ina219T_1::TryReadShuntVoltage(&val) && shunt_1 != val && val > 100)
-        {
-            serial.Transmit.Write("1");
-            // serial.Transmit.WriteLine(val);
-            shunt_1 = val;
-        }
-        else if (Ina219T_2::TryReadShuntVoltage(&val) && shunt_2 != val && val > 100)
-        {
-            serial.Transmit.Write("2");
-            // serial.Transmit.WriteLine(val);
-            shunt_2 = val;
-        }
-        else if (Ina219T_3::TryReadShuntVoltage(&val) && shunt_3 != val && val > 100)
-        {
-            serial.Transmit.Write("3");
-            // serial.Transmit.WriteLine(val);
-            shunt_3 = val;
-        }
+        blockControllerTask.Run(blockController0, blockController1, blockController2, blockController3);
 
         // ReadSensors();
-        ReadSerial();
+        // ReadSerial();
     }
 
     // void ReadSensors()
@@ -174,10 +145,10 @@ public:
         // enable global interrupts
         Interupts::Enable();
 
-        if (Twi::Open(I2cFrequency::Normal) != TwiResult::Ok)
+        if (Twi::Open(I2cFrequency::Normal, false) != TwiResult::Ok)
             Stop(2);
 
-        if (!PwmModuleT::Open(50) ||
+        if (!PwmModuleT::Open(100) ||
             !PwmModuleT::setOutputMode(PwmModuleT::OutputDriver::PushPull))
             Stop(3);
 

@@ -34,12 +34,12 @@
 /** MACRO: Declare a 'Task' procedure 'name' with parameters.
  *  \return Returns an indication if the task has yielded (false) or simply exited (true).
  */
-#define Task_BeginParams(name, parameters) \
-    bool name(parameters)                      \
-    {                                          \
-        bool _yield_ = false;                  \
-        switch (_task)                         \
-        {                                      \
+#define Task_BeginParams(name, args...) \
+    bool name(args)                 \
+    {                               \
+        bool _yield_ = false;       \
+        switch (_task)              \
+        {                           \
         case 0:
 
 /** MACRO: Declare the end of the 'Task' procedure
