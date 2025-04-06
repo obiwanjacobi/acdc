@@ -1,51 +1,163 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
+import { useEffect, useState } from "react";
 import "./App.css";
+import Button from "@mui/material/Button";
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+    // WebSerial states
+    const [port, setPort] = useState<SerialPort | null>(null);
+    const [serialOutput, setSerialOutput] = useState<string>("");
+    const [inputText, setInputText] = useState<string>("");
+    const [isConnected, setIsConnected] = useState<boolean>(false);
+    const [disconnect, setDisconnect] = useState<boolean>(false);
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
+    // Connect to a serial port
+    async function connectToSerial() {
+        if (!navigator.serial) {
+            alert("Web Serial API not supported in this browser!");
+            return;
+        }
 
-  return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
+        try {
+            // Request a port and open it
+            const port = await navigator.serial.requestPort();
+            await port.open({ baudRate: 115200 });
+            setPort(port);
+            setIsConnected(true);
+            setDisconnect(false);
 
-      <div className="row">
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
+            readSerialData(port);
+        } catch (error) {
+            console.error("Error connecting to serial port:", error);
+        }
+    }
 
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
-  );
+    function startDisconnect() {
+        setDisconnect(true);
+    }
+
+    // Disconnect from serial port
+    useEffect(() => {
+        async function disconnectSerial() {
+            if (port && disconnect) {
+                try {
+                    await port.close();
+                    setPort(null);
+                    setIsConnected(false);
+                    console.log("Disconnected from serial port");
+                } catch (error) {
+                    console.error("Error disconnecting:", error);
+                }
+            }
+        }
+
+        disconnectSerial();
+    }, [disconnect]);
+
+    // Clean up on component unmount
+    useEffect(() => {
+        return () => {
+            if (port) {
+                port.close().catch(console.error);
+            }
+        };
+    }, [port]);
+
+    // Read data from the serial port
+    async function readSerialData(port: SerialPort) {
+        if (!port.readable) return;
+
+        const reader = port.readable.getReader();
+        const decoder = new TextDecoder();
+
+        try {
+            while (!disconnect) {
+                const { value, done } = await reader.read();
+                if (done) break;
+
+                const text = decoder.decode(value);
+                setSerialOutput((prev) => prev + text);
+            }
+        } catch (error) {
+            console.error("Error reading from serial port:", error);
+        } finally {
+            reader.releaseLock();
+        }
+    }
+
+    // Write data to the serial port
+    async function writeToSerial() {
+        if (!port || !port.writable || !inputText) return;
+
+        const writer = port.writable.getWriter();
+        const encoder = new TextEncoder();
+
+        try {
+            await writer.write(encoder.encode(inputText + "\n"));
+            setInputText("");
+        } catch (error) {
+            console.error("Error writing to serial port:", error);
+        } finally {
+            writer.releaseLock();
+        }
+    }
+
+    return (
+        <main className="container">
+            <div
+                className="serial-section"
+                style={{
+                    marginTop: "2rem",
+                    padding: "1rem",
+                    border: "1px solid #ccc",
+                    borderRadius: "8px",
+                }}
+            >
+                <h2>Run DC / Automatic Control DC</h2>
+
+                <div className="row" style={{ marginBottom: "1rem" }}>
+                    <Button onClick={connectToSerial} disabled={isConnected}>
+                        Connect to Serial
+                    </Button>
+                    <Button onClick={startDisconnect} disabled={!isConnected}>
+                        Disconnect
+                    </Button>
+                </div>
+
+                {isConnected && (
+                    <>
+                        <div style={{ marginBottom: "1rem" }}>
+                            <h3>Serial Output:</h3>
+                            <pre
+                                style={{
+                                    padding: "0.5rem",
+                                    height: "100px",
+                                    overflowY: "scroll",
+                                }}
+                            >
+                                {serialOutput || "No data received yet..."}
+                            </pre>
+                        </div>
+
+                        <div className="row">
+                            <input
+                                value={inputText}
+                                onChange={(e) =>
+                                    setInputText(e.currentTarget.value)
+                                }
+                                placeholder="Text to send..."
+                            />
+                            <Button
+                                onClick={writeToSerial}
+                                disabled={inputText.length == 0}
+                            >
+                                Send
+                            </Button>
+                        </div>
+                    </>
+                )}
+            </div>
+        </main>
+    );
 }
 
 export default App;
