@@ -1,7 +1,10 @@
 {
+  "compileOnSave": false,
   "compilerOptions": {
+    "strict": true,
     "composite": true,
     "skipLibCheck": true,
+    "sourceMap": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true

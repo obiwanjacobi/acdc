@@ -3,7 +3,6 @@ import "./App.css";
 import Button from "@mui/material/Button";
 
 function App() {
-    // WebSerial states
     const [port, setPort] = useState<SerialPort | null>(null);
     const [serialOutput, setSerialOutput] = useState<string>("");
     const [inputText, setInputText] = useState<string>("");
@@ -141,15 +140,10 @@ function App() {
                         <div className="row">
                             <input
                                 value={inputText}
-                                onChange={(e) =>
-                                    setInputText(e.currentTarget.value)
-                                }
+                                onChange={(e) => setInputText(e.currentTarget.value)}
                                 placeholder="Text to send..."
                             />
-                            <Button
-                                onClick={writeToSerial}
-                                disabled={inputText.length == 0}
-                            >
+                            <Button onClick={writeToSerial} disabled={inputText.length == 0}>
                                 Send
                             </Button>
                         </div>
