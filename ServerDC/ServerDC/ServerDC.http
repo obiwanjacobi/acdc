@@ -1,0 +1,11 @@
+@ServerDC_HostAddress = http://localhost:5246
+
+GET {{ServerDC_HostAddress}}/todos/
+Accept: application/json
+
+###
+
+GET {{ServerDC_HostAddress}}/todos/1
+Accept: application/json
+
+###
