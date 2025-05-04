@@ -46,16 +46,7 @@ const char debugMsg[] PROGMEM = "Debug is enabled";
 
 CommandParser<CommandHandler> commandParser;
 
-// ReadWithState<DigitalInputPin<PortPins::D2>, bool> sensor1;
-// ReadWithState<DigitalInputPin<PortPins::D4>, bool> sensor2;
-// ReadWithState<DigitalInputPin<PortPins::D5>, bool> sensor3;
-// ReadWithState<DigitalInputPin<PortPins::D6>, bool> sensor4;
-
-BlockControllerT_0 blockController0;
-BlockControllerT_1 blockController1;
-BlockControllerT_2 blockController2;
-BlockControllerT_3 blockController3;
-BlockControllerTask<Scheduler> blockControllerTask;
+// BlockControllerTask<Scheduler> blockControllerTask;
 
 class Program
 {
@@ -67,37 +58,11 @@ public:
         // indication that the program is running
         blinkLedTask.Run();
 
-        blockControllerTask.Run(blockController0, blockController1, blockController2, blockController3);
+        // blockControllerTask.Run(blockController0, blockController1, blockController2, blockController3);
 
-        // ReadSensors();
-        // ReadSerial();
+        ReadSerial();
+        ReadSensors();
     }
-
-    // void ReadSensors()
-    // {
-    //     bool value = false;
-    //     if (sensor1.TryRead(&value))
-    //     {
-    //         commandParser.OnDirection(false);
-    //         serial.Transmit.Write("O1:");
-    //         serial.Transmit.WriteLine(value);
-    //     }
-    //     if (sensor2.TryRead(&value))
-    //     {
-    //         serial.Transmit.Write("O2:");
-    //         serial.Transmit.WriteLine(value);
-    //     }
-    //     if (sensor3.TryRead(&value))
-    //     {
-    //         serial.Transmit.Write("O3:");
-    //         serial.Transmit.WriteLine(value);
-    //     }
-    //     if (sensor4.TryRead(&value))
-    //     {
-    //         serial.Transmit.Write("O4:");
-    //         serial.Transmit.WriteLine(value);
-    //     }
-    // }
 
     void ReadSerial()
     {
@@ -107,7 +72,7 @@ public:
             if (serial.Receive.TryRead(&data))
             {
                 // serial echo
-                serial.Transmit.Write((const char)data);
+                // serial.Transmit.Write((const char)data);
 
                 ParseCommand(data);
             }
@@ -120,17 +85,31 @@ public:
 
         if (commandParser.IsError())
         {
-            serial.Transmit.WriteLine("?");
+            // serial.Transmit.WriteLine("?");
             commandParser.Clear();
         }
         else if (commandParser.IsComplete())
         {
-            serial.Transmit.WriteLine("ok");
             commandParser.Dispatch();
+            // serial.Transmit.WriteLine("ok");
             commandParser.Clear();
         }
 
         return parsed;
+    }
+
+    void ReadSensors()
+    {
+        BlockOccupationEvent *blockEvent = nullptr;
+        if (commandParser.TryCreateBlockOccupationEvent(&blockEvent))
+        {
+            FixedArray<uint8_t, 10> array;
+            CommandBuffer buffer(array.getBuffer(), array.getCapacity());
+            uint8_t l = blockEvent->Serialize(buffer);
+            // shrink buffer to what has actually being written
+            CommandBuffer data(buffer, l);
+            serial.Transmit.WriteBuffer(data);
+        }
     }
 
     void Initialize()
@@ -152,19 +131,13 @@ public:
             !PwmModuleT::setOutputMode(PwmModuleT::OutputDriver::PushPull))
             Stop(3);
 
-        if (!Ina219T_0::Open(7500))
+        if (!commandParser.Open())
             Stop(4);
-        if (!Ina219T_1::Open(7500))
-            Stop(5);
-        if (!Ina219T_2::Open(7500))
-            Stop(6);
-        if (!Ina219T_3::Open(7500))
-            Stop(7);
 
         FixedString<20> temp;
         // welcome message
         temp.CopyFromProgMem(welcomeMsg);
-        serial.Transmit.WriteLine(temp);
+        // serial.Transmit.WriteLine(temp);
 
         temp.CopyFromProgMem(debugMsg);
         LogDebug(temp);
@@ -182,8 +155,8 @@ public:
 
         if (code > 1)
         {
-            serial.Transmit.Write("Stop: ");
-            serial.Transmit.WriteLine(code);
+            // serial.Transmit.Write("Stop: ");
+            // serial.Transmit.WriteLine(code);
         }
 
         blinkLedTask.Write(true);
@@ -220,50 +193,50 @@ ISR(USART_UDRE_vect)
 
 #ifdef DEBUG
 
-void AtlDebugWrite(uint8_t componentId, DebugLevel level, const char *message)
-{
-    serial.Transmit.Write(Scheduler::getTicks());
-    if (componentId != 0)
-    {
-        serial.Transmit.Write(" [");
-        serial.Transmit.Write(componentId);
-        serial.Transmit.Write("] ");
-    }
-    else
-        serial.Transmit.Write(" - ");
+// void AtlDebugWrite(uint8_t componentId, DebugLevel level, const char *message)
+// {
+//     serial.Transmit.Write(Scheduler::getTicks());
+//     if (componentId != 0)
+//     {
+//         serial.Transmit.Write(" [");
+//         serial.Transmit.Write(componentId);
+//         serial.Transmit.Write("] ");
+//     }
+//     else
+//         serial.Transmit.Write(" - ");
 
-    switch (level)
-    {
-    case DebugLevel::Critical:
-        serial.Transmit.Write("CRITICAL: ");
-        break;
-    case DebugLevel::Error:
-        serial.Transmit.Write("ERROR: ");
-        break;
-    case DebugLevel::Warning:
-        serial.Transmit.Write("WARNING: ");
-        break;
-    case DebugLevel::Info:
-        serial.Transmit.Write("INFO: ");
-        break;
-    case DebugLevel::Trace:
-        serial.Transmit.Write("TRACE: ");
-        break;
-    case DebugLevel::Debug:
-        serial.Transmit.Write("DEBUG: ");
-        break;
-    default:
-        break;
-    }
-    serial.Transmit.WriteLine(message);
-}
+//     switch (level)
+//     {
+//     case DebugLevel::Critical:
+//         serial.Transmit.Write("CRITICAL: ");
+//         break;
+//     case DebugLevel::Error:
+//         serial.Transmit.Write("ERROR: ");
+//         break;
+//     case DebugLevel::Warning:
+//         serial.Transmit.Write("WARNING: ");
+//         break;
+//     case DebugLevel::Info:
+//         serial.Transmit.Write("INFO: ");
+//         break;
+//     case DebugLevel::Trace:
+//         serial.Transmit.Write("TRACE: ");
+//         break;
+//     case DebugLevel::Debug:
+//         serial.Transmit.Write("DEBUG: ");
+//         break;
+//     default:
+//         break;
+//     }
+//     serial.Transmit.WriteLine(message);
+// }
 
-bool AtlDebugFilter(uint8_t componentId, DebugLevel level)
-{
-    if (componentId == 1)
-        return false;
+// bool AtlDebugFilter(uint8_t componentId, DebugLevel level)
+// {
+//     if (componentId == 1)
+//         return false;
 
-    return true;
-}
+//     return true;
+// }
 
 #endif // DEBUG

@@ -134,7 +134,6 @@ public:
         _count = 0;
     }
 
-protected:
     /** Gets the pointer to the internal array buffer.
      */
     inline ItemT *getBuffer()

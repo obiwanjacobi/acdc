@@ -1,6 +1,5 @@
 #pragma once
 #include <stdint.h>
-#include "DefaultOfT.h"
 
 /** Represents a bounds-checked (read-only) array.
  *  \tparam T is the type of the array items.
@@ -35,10 +34,12 @@ public:
      *  \param index is a zero-based index that has to be greater or equal to 0 (zero) and smaller than MaxItems.
      *  \return Returns the item or a default value.
      */
-    T GetAt(int16_t index) const
+    const T GetAt(int16_t index) const
     {
-        if (!IsValidIndex(index))
-            return Default<T>::DefaultOfT;
+        if (index < 0)
+            return _arr[0];
+        if (index >= MaxItems)
+            return _arr[MaxItems - 1];
 
         return _arr[index];
     }
@@ -73,7 +74,7 @@ public:
      *  \param index is a zero-based index that has to be greater or equal to 0 (zero) and smaller than MaxItems.
      *  \return Returns the item or a default value.
      */
-    T operator[](int16_t index) const
+    const T operator[](int16_t index) const
     {
         return GetAt(index);
     }

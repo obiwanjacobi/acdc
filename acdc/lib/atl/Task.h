@@ -23,6 +23,7 @@
 /** MACRO: Declare a 'Task' procedure 'name'.
  *  \return Returns an indication if the task has yielded (false) or simply exited (true).
  */
+// NOTE: You can get an 'unused variable _yield_' warning if you do not use the Yield-macros.
 #define Task_Begin(name)      \
     bool name()               \
     {                         \
@@ -34,6 +35,7 @@
 /** MACRO: Declare a 'Task' procedure 'name' with parameters.
  *  \return Returns an indication if the task has yielded (false) or simply exited (true).
  */
+// NOTE: You can get an 'unused variable _yield_' warning if you do not use the Yield-macros.
 #define Task_BeginParams(name, args...) \
     bool name(args)                 \
     {                               \

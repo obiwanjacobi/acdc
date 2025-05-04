@@ -8,13 +8,13 @@ internal sealed partial class ComDC
     private static class SerialCom
     {
         private static Lock _lock = new();
-        private static Queue<string> _incoming = new();
-        private static Queue<string> _outgoing = new();
+        private static Queue<byte[]> _incoming = new();
+        private static Queue<byte[]> _outgoing = new();
         // do not require locks
         private static SerialPort _serialPort = new();
         private static Thread? _backgroundThread;
         private static volatile bool _running = false;
-        private static string _partial = String.Empty;
+        private static List<byte> _partial = [];
 
         public static void Open(string comPort, int baudRate)
         {
@@ -40,13 +40,10 @@ internal sealed partial class ComDC
         {
             get
             {
-                int count = 0;
                 lock (_lock)
                 {
-                    count = _incoming.Count;
+                    return _incoming.Count;
                 }
-
-                return count;
             }
         }
 
@@ -54,17 +51,14 @@ internal sealed partial class ComDC
         {
             get
             {
-                int count = 0;
                 lock (_lock)
                 {
-                    count = _outgoing.Count;
+                    return _outgoing.Count;
                 }
-
-                return count;
             }
         }
 
-        public static bool TryReceiveMessage([NotNullWhen(true)] out string? outMessage)
+        public static bool TryReceiveMessage([NotNullWhen(true)] out byte[]? outMessage)
         {
             lock (_lock)
             {
@@ -79,7 +73,7 @@ internal sealed partial class ComDC
             return false;
         }
 
-        public static void SendMessage(string message)
+        public static void SendMessage(byte[] message)
         {
             lock (_lock)
             {
@@ -129,10 +123,16 @@ internal sealed partial class ComDC
 
         private static bool Receive()
         {
-            var buffer = _serialPort.ReadExisting();
-            if (!String.IsNullOrEmpty(buffer))
+            var bytesToRead = _serialPort.BytesToRead;
+            if (bytesToRead == 0) return false;
+
+            var buffer = new byte[bytesToRead];
+            var read = _serialPort.Read(buffer, 0, bytesToRead);
+
+            if (read > 0)
             {
-                Parse(buffer);
+                Parse(buffer, Math.Min(bytesToRead, read));
+                //Console.WriteLine(Encoding.ASCII.GetChars(buffer));
                 return true;
             }
 
@@ -142,7 +142,7 @@ internal sealed partial class ComDC
         private static bool Send()
         {
             bool hasWork = false;
-            string? msg = null;
+            byte[]? msg = null;
 
             lock (_lock)
             {
@@ -153,56 +153,38 @@ internal sealed partial class ComDC
             }
 
             if (msg is not null)
-                _serialPort.WriteLine(msg);
+                _serialPort.Write(msg, 0, msg.Length);
 
             return hasWork;
         }
 
         // End Of Message
-        const char EOM = '\n';
+        const byte EOM = 0xFF;
 
-        private static void Parse(string partial)
+        private static void Parse(byte[] buffer, int count)
         {
-            var parts = partial.Split(EOM);
-
-            int i = 0;
-            // partial left over from the last time?
-            if (_partial.Length > 0)
+            lock (_lock)
             {
-                var msg = _partial + parts[i++];
-                _partial = String.Empty;
-
-                lock (_lock)
-                {
-                    _incoming.Enqueue(msg);
-                }
+                _incoming.Enqueue(buffer);
             }
 
-            // Process all complete messages (all parts except the last one)
-            for (; i < parts.Length - 1; i++)
-            {
-                var part = parts[i];
-                // empty messages are skipped
-                if (String.IsNullOrEmpty(part)) continue;
+            //for (int i = 0; i < count; i++)
+            //{
+            //    var data = buffer[i];
 
-                lock (_lock)
-                {
-                    _incoming.Enqueue(part);
-                }
-            }
+            //    if (data == EOM)
+            //    {
+            //        var arr = _partial.ToArray();
+            //        _partial.Clear();
 
-            // Handle the last part (could be a partial message)
-            _partial += parts[^1];
-
-            // If the last part ends with EOM, it's a complete message
-            if (partial.EndsWith(EOM))
-            {
-                lock (_lock)
-                {
-                    _incoming.Enqueue(_partial);
-                }
-                _partial = String.Empty;
-            }
+            //        lock (_lock)
+            //        {
+            //            _incoming.Enqueue(arr);
+            //        }
+            //    }
+            //    else
+            //        _partial.Add(data);
+            //}
         }
     }
 }

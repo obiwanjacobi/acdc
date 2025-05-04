@@ -12,6 +12,8 @@
 template <typename T, const uint16_t Size>
 class RingBuffer
 {
+    static_assert(Size > 1, "Size must be bigger than 1.");
+
 public:
     typedef T ItemT;
 
@@ -42,23 +44,41 @@ public:
     {
         LockScope lock;
 
+        uint16_t newIndex = _writeIndex + 1;
         // check for overrun
-        if ((_writeIndex + 1) >= Size)
-        {
-            // TODO: this does not seem right
-            if (_readIndex == 0)
-                return false;
-        }
-        else if ((_writeIndex + 1) == _readIndex)
+        if (newIndex == _readIndex)
+            return false;
+        else if (newIndex >= Size && _readIndex == 0)
             return false;
 
         _buffer[_writeIndex] = value;
-        _writeIndex++;
+        _writeIndex = newIndex;
 
         if (_writeIndex >= Size)
-        {
             _writeIndex = 0;
+
+        return true;
+    }
+
+    /** Reads one value from the buffer.
+     *  The method does protect against under-run.
+     *  \param outData is the value to store the read value.
+     *  \return Returns true if the read was successfull and outData was filled.
+     */
+    bool TryRead(T *outData)
+    {
+        // empty
+        if (_readIndex == _writeIndex)
+        {
+            outData = nullptr;
+            return false;
         }
+
+        *outData = _buffer[_readIndex];
+        _readIndex++;
+
+        if (_readIndex >= Size)
+            _readIndex = 0;
 
         return true;
     }
@@ -75,9 +95,7 @@ public:
         _readIndex++;
 
         if (_readIndex >= Size)
-        {
             _readIndex = 0;
-        }
 
         return result;
     }
@@ -126,6 +144,7 @@ private:
 template <typename T, const uint8_t Size>
 class RingBufferFast
 {
+    static_assert(Size > 1, "Size must be bigger than 1.");
     static_assert(Size < 255, "Size must be less than 255!");
 #define ActualSize (Size + 1)
 

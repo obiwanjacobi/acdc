@@ -7,7 +7,16 @@ class BlockController : public MotorControllerT
 public:
     bool Open()
     {
-        return CurrentSensorT::Open(7500);
+        // clang-format off
+        return CurrentSensorT::Open(
+            0,
+            CurrentSensorT::Mode::ShuntAndBusContinuous,
+            CurrentSensorT::Sensitivity::mV320,
+            CurrentSensorT::AdcMode::Average32,
+            CurrentSensorT::AdcMode::Average8,
+            CurrentSensorT::BusVoltage::Volt16
+        );
+        // clang-format on
     }
 
     bool TryReadOccupied(int16_t *val)
@@ -15,15 +24,25 @@ public:
         return CurrentSensorT::TryReadShuntVoltage(val);
     }
 
-    bool IsOccupied(int16_t threshold = 500)
+    bool IsOccupied(uint16_t threshold = 200, uint16_t delta = 200)
     {
-        int16_t val = 0;
-        if (TryReadOccupied(&val) && _lastShuntV != val)
+        int16_t bus = 0;
+        int16_t shunt = 0;
+        if (CurrentSensorT::TryReadBusVoltage(&bus) &&
+            CurrentSensorT::TryReadShuntVoltage(&shunt))
         {
-            _lastShuntV = val;
+            if (Math::Abs(bus) > threshold &&
+                Math::Abs(shunt - _lastShuntV) > delta)
+            {
+                serial.Transmit.Write(CurrentSensorT::getAddress());
+                serial.Transmit.Write(" ");
+                serial.Transmit.WriteLine(shunt);
+
+                _lastShuntV = Math::Abs(shunt);
+            }
         }
 
-        return Math::Abs(_lastShuntV) > threshold;
+        return _lastShuntV > threshold;
     }
 
 private:

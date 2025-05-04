@@ -4,6 +4,7 @@
 #include "../lib/UsartOutputStream.h"
 #include "../lib/atl/RingBuffer.h"
 #include "../lib/atl/TextWriter.h"
+#include "../lib/atl/Slice.h"
 
 enum class BaudRates : uint32_t
 {
@@ -14,10 +15,28 @@ enum class BaudRates : uint32_t
     Baud115200 = 115200
 };
 
+template <class BaseT>
+class DataWriter : public BaseT
+{
+public:
+    void WriteData(uint8_t data)
+    {
+        BaseT::Write(data);
+    }
+    void WriteBuffer(Slice<uint8_t> &buffer)
+    {
+        for (uint8_t i = 0; i < buffer.getLength(); i++)
+        {
+            BaseT::Write(buffer[i]);
+        }
+    }
+};
+
 const UsartIds usartId = UsartIds::Usart0;
 const uint8_t CharacterBufferSize = 21;
 
-typedef TextWriter<UsartOutputStream<UsartTransmit<usartId>, RingBuffer<uint8_t, CharacterBufferSize>>> SerialWriter;
+typedef TextWriter<DataWriter<UsartOutputStream<UsartTransmit<usartId>, RingBuffer<uint8_t, CharacterBufferSize>>>> SerialWriter;
+// typedef DataWriter<UsartOutputStream<UsartTransmit<usartId>, RingBuffer<uint8_t, CharacterBufferSize>>> SerialWriter;
 typedef UsartInputStream<UsartReceive<usartId>, RingBuffer<uint8_t, CharacterBufferSize>> SerialReader;
 
 class Serial : public Usart<usartId, SerialWriter, SerialReader>

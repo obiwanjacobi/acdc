@@ -1,5 +1,6 @@
 ﻿
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ServerDC;
 
@@ -19,9 +20,24 @@ internal sealed partial class ComDC
         SerialCom.Close();
     }
 
-    private readonly ConcurrentDictionary<int, Action<string>> _subscribers = new();
+    public void Send(byte[] message)
+    {
+        SerialCom.SendMessage(message);
+    }
 
-    public IDisposable Subscribe(Action<string> subscriber)
+    public bool HasIncoming
+    {
+        get { return SerialCom.IncomingMessageCount > 0; }
+    }
+
+    public bool TryReceive([NotNullWhen(true)] out byte[]? message)
+    {
+        return SerialCom.TryReceiveMessage(out message);
+    }
+
+    private readonly ConcurrentDictionary<int, Action<byte[]>> _subscribers = new();
+
+    public IDisposable Subscribe(Action<byte[]> subscriber)
     {
         var id = _subscribers.Keys.Aggregate((acc, val) => Math.Max(acc, val));
         id++;
@@ -30,7 +46,7 @@ internal sealed partial class ComDC
         return new SubscriptionScope(_subscribers, id);
     }
 
-    private void Publish(string message)
+    private void Publish(byte[] message)
     {
         foreach (var subscriber in _subscribers)
         {
@@ -53,7 +69,7 @@ internal sealed partial class ComDC
 
     private void NotificationCallback(object? _)
     {
-        while (SerialCom.TryReceiveMessage(out string? msg))
+        while (SerialCom.TryReceiveMessage(out byte[]? msg))
         {
             Publish(msg);
         }
@@ -65,7 +81,12 @@ internal sealed partial class ComDC
         _notificationTimer = null;
     }
 
-    private sealed class SubscriptionScope(IDictionary<int, Action<string>> subscribers, int id) : IDisposable
+    internal void Send(object value)
+    {
+        throw new NotImplementedException();
+    }
+
+    private sealed class SubscriptionScope(IDictionary<int, Action<byte[]>> subscribers, int id) : IDisposable
     {
         public void Dispose()
         {

@@ -1,6 +1,5 @@
 #pragma once
 #include <stdint.h>
-#include "DefaultOfT.h"
 
 template <typename T>
 class Slice
@@ -11,10 +10,17 @@ public:
     {
     }
 
+    Slice(Slice<T> &slice, uint8_t length)
+        : _value(slice._value), _length(length)
+    {
+        if (slice._length < length)
+            _length = slice._length;
+    }
+
     T &operator[](uint8_t index)
     {
         if (!IsValidIndex(index))
-            return Default<T>::DefaultOfT;
+            return _value[_length - 1];
 
         return _value[index];
     }
@@ -22,7 +28,7 @@ public:
     const T &operator[](uint8_t index) const
     {
         if (!IsValidIndex(index))
-            return Default<T>::DefaultOfT;
+            return _value[_length - 1];
 
         return _value[index];
     }

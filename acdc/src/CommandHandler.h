@@ -1,58 +1,96 @@
 #pragma once
 #include <stdint.h>
-#include "../lib/atl/Debug.h"
-#include "../lib/atl/Math.h"
-#include "hardware.h"
+
+#include "Block.h"
+#include "Commands.h"
+
+extern Serial serial;
+
+BlockControllerT_0 blockController0;
+BlockControllerT_1 blockController1;
+BlockControllerT_2 blockController2;
+BlockControllerT_3 blockController3;
 
 class CommandHandler
 {
 public:
-    void OnPower(bool on)
+    bool Open()
     {
-        // motorController1.setPower(on);
-        // motorController2.setPower(on);
-        // motorController3.setPower(on);
-        // motorController4.setPower(on);
+        return blockController0.Open() &&
+               blockController1.Open() &&
+               blockController2.Open() &&
+               blockController3.Open();
     }
-    // speed >= 0 && <= 9
-    void OnSpeed(uint8_t speed)
-    {
-        uint8_t actual = Math::ScaleLinear<uint8_t, uint8_t>(0, 9, 0, 255, speed);
 
-        // motorController1.setSpeed(actual);
-        // motorController2.setSpeed(actual);
-        // motorController3.setSpeed(actual);
-        // motorController4.setSpeed(actual);
-    }
-    void OnDirection(bool forward)
+    bool TryCreateBlockOccupationEvent(BlockOccupationEvent **outEvent)
     {
-        Direction dir = forward ? Direction::Forward : Direction::Backward;
-        // motorController1.setDirection(dir);
-        // motorController2.setDirection(dir);
-        // motorController3.setDirection(dir);
-        // motorController4.setDirection(dir);
+        if (blockController0.TryReadOccupied() ||
+            blockController1.TryReadOccupied() ||
+            blockController2.TryReadOccupied() ||
+            blockController3.TryReadOccupied())
+        {
+            BitArray<uint8_t> flags;
+            flags.Set(0, blockController0.getOccupied());
+            flags.Set(1, blockController1.getOccupied());
+            flags.Set(2, blockController2.getOccupied());
+            flags.Set(3, blockController3.getOccupied());
+
+            *outEvent = BlockOccupationEvent::Create(1, flags);
+            return true;
+        }
+
+        return false;
+    }
+
+protected:
+    void OnCommand(GlobalResetCommand *command)
+    {
+    }
+
+    void OnCommand(BlockPowerCommand *command)
+    {
+        switch (command->BlockId)
+        {
+        case 1:
+            blockController0.setPower(command->PowerOn);
+            break;
+        case 2:
+            blockController1.setPower(command->PowerOn);
+            break;
+        case 3:
+            blockController2.setPower(command->PowerOn);
+            break;
+        case 4:
+            blockController3.setPower(command->PowerOn);
+            break;
+        default:
+            break;
+        }
+    }
+    void OnCommand(BlockSpeedCommand *command)
+    {
+        switch (command->BlockId)
+        {
+        case 1:
+            blockController0.setSpeed(command->Speed);
+            // serial.Transmit.Write("B1S");
+            break;
+        case 2:
+            blockController1.setSpeed(command->Speed);
+            // serial.Transmit.Write("B2S");
+            break;
+        case 3:
+            blockController2.setSpeed(command->Speed);
+            // serial.Transmit.Write("B3S");
+            break;
+        case 4:
+            blockController3.setSpeed(command->Speed);
+            // serial.Transmit.Write("B4S");
+            break;
+        default:
+            break;
+        }
+
+        // serial.Transmit.WriteLine(command->Speed);
     }
 };
-
-#ifdef ARDUINO_MOTOR_SHIELD_REV3
-// Arduino motor shield Rev3
-
-// Channel A
-// D3 pwm
-// B4 dir
-// B1 break
-// C0 sense
-
-// Channel B
-// B3 pwm
-// B5 dir
-// B0 break
-// C1 sense
-
-typedef PwmTimer2 PwmTimerT;
-PwmTimerT pwmTimer;
-PwmOutputPin<PwmTimerT, PortPins::D3> pwmOutputPin1(&pwmTimer);
-PwmOutputPin<PwmTimerT, PortPins::B3> pwmOutputPin2(&pwmTimer);
-MotorController<PwmOutputPin<PwmTimerT, PortPins::D3>, DigitalOutputPin<PortPins::B4>, DigitalOutputPin<PortPins::B1>, AnalogInputPin<PortPins::C0>> motorController1(&pwmOutputPin1);
-MotorController<PwmOutputPin<PwmTimerT, PortPins::B3>, DigitalOutputPin<PortPins::B5>, DigitalOutputPin<PortPins::B0>, AnalogInputPin<PortPins::C1>> motorController2(&pwmOutputPin2);
-#endif

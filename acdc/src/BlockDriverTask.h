@@ -3,82 +3,12 @@
 #include "../lib/atl/Collection.h"
 #include "../lib/atl/FixedArray.h"
 #include "../lib/atl/Task.h"
+#include "Block.h"
 #include "BlockController.h"
 #include "hardware.h"
 #include "Serial.h"
 
 extern Serial serial;
-
-template <class BlockT>
-class Block : public BlockT
-{
-public:
-    bool TryReadOccupied()
-    {
-        int16_t val = 0;
-        if (BlockT::TryReadOccupied(&val))
-        {
-            occupiedValues.Add(Math::Abs(val));
-
-            if (occupiedValues.getCount() == occupiedValues.getCapacity())
-            {
-                int16_t value = GetOccupiedValue(200);
-                occupiedValues.Clear();
-
-                if (_occupied != value)
-                {
-                    _occupied = value;
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    bool getOccupied() const
-    {
-        return _occupied;
-    }
-
-    void Dump()
-    {
-        for (int16_t i = 0; i < occupiedValues.getCount(); i++)
-        {
-            if (i > 0)
-                serial.Transmit.Write(", ");
-            serial.Transmit.Write(occupiedValues[i]);
-        }
-
-        serial.Transmit.WriteLine();
-    }
-
-private:
-    bool _occupied;
-
-#define ValueCount 6
-
-    Collection<FixedArray<int16_t, ValueCount>> occupiedValues;
-
-    bool GetOccupiedValue(int16_t threshold) const
-    {
-        int16_t count = occupiedValues.getCount();
-        int16_t overThresholdCount = 0;
-
-        for (int16_t i = 0; i < count; i++)
-        {
-            if (occupiedValues[i] > threshold)
-                overThresholdCount++;
-        }
-
-        return overThresholdCount >= count / 2;
-    }
-};
-
-typedef Block<BlockController<MotorControllerT_0, Ina219T_0>> BlockControllerT_0;
-typedef Block<BlockController<MotorControllerT_1, Ina219T_1>> BlockControllerT_1;
-typedef Block<BlockController<MotorControllerT_2, Ina219T_2>> BlockControllerT_2;
-typedef Block<BlockController<MotorControllerT_3, Ina219T_3>> BlockControllerT_3;
 
 // Controls the StopBlock based on the state of the PrioBlock
 template <class SchedulerT, class StopBlockT, class PrioBlockT>
@@ -135,7 +65,7 @@ public:
                 stopBlock.setSpeed(0);
                 _state = State::Stopped;
 
-                serial.Transmit.WriteLine(stopMessage);
+                //serial.Transmit.WriteLine(stopMessage);
             }
         }
         else // running
@@ -199,10 +129,10 @@ public:
                 block2.TryReadOccupied() ||
                 block3.TryReadOccupied())
             {
-                serial.Transmit.Write(block0.getOccupied());
-                serial.Transmit.Write(block1.getOccupied());
-                serial.Transmit.Write(block2.getOccupied());
-                serial.Transmit.WriteLine(block3.getOccupied());
+                // serial.Transmit.Write(block0.getOccupied());
+                // serial.Transmit.Write(block1.getOccupied());
+                // serial.Transmit.Write(block2.getOccupied());
+                // serial.Transmit.WriteLine(block3.getOccupied());
 
                 _blockDriver0.Run(block0, block1, "Stop 0");
                 _blockDriver1.Run(block1, block2, "Stop 1");

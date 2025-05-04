@@ -1,25 +1,27 @@
 #pragma once
 #include <stdint.h>
 
-// BaseT is the class that will handle/implement the actual commands
+#include <Collection.h>
+#include <FixedArray.h>
+#include <Slice.h>
 
-template <class BaseT>
-class CommandParser : public BaseT
+#include "Commands.h"
+#include "CommandBuilder.h"
+
+extern Serial serial;
+
+template <class CommandHandlerT>
+class CommandParser : public CommandHandlerT
 {
-public:
-    enum class CommandType : uint8_t
-    {
-        None,
-        Power,     //'Po' or 'P' (off)
-        Speed,     //'Sn' (n=0-9)
-        Direction, //'Df' or 'Db'
-    };
 
+public:
     enum class ParserState : uint8_t
     {
         Idle,
-        Command,
-        Parameter,
+        Command_Node,
+        Command_Device,
+        Command_Message,
+        Parameters,
         Complete,
         Error
     };
@@ -32,129 +34,120 @@ public:
     };
 
     CommandParser()
+        : _slice(_params.getBuffer(), _params.getCapacity())
     {
-        Clear();
     }
 
-    bool Parse(char data)
+    bool Parse(uint8_t data)
     {
         switch (_state)
         {
-        case ParserState::Complete:
-        case ParserState::Error:
         case ParserState::Idle:
-            if (data == 'P')
+            if (data == Command::EOM)
             {
-                _command = CommandType::Power;
-                _state = ParserState::Command;
-                return true;
+                // ignore
+                return false;
             }
-            if (data == 'S')
-            {
-                _command = CommandType::Speed;
-                _state = ParserState::Command;
-                return true;
-            }
-            if (data == 'D')
-            {
-                _command = CommandType::Direction;
-                _state = ParserState::Command;
-                return true;
-            }
-            Clear();
-            return false;
 
-        case ParserState::Command:
-            if (data == ' ')
+            _command.NodeId = data;
+            _state = ParserState::Command_Node;
+            // serial.Transmit.Write("N:");
+            // serial.Transmit.WriteLine(data);
+            return true;
+        case ParserState::Command_Node:
+            if (data == Command::EOM)
             {
-                // ignore, but no error
+                _state = ParserState::Error;
+                _error = ParserError::InvalidCommand;
+                // serial.Transmit.WriteLine("E0");
                 return true;
             }
-            if (data == 'f' || data == 'b')
+            _command.DeviceId = data;
+            _state = ParserState::Command_Device;
+            // serial.Transmit.Write("D:");
+            // serial.Transmit.WriteLine(data);
+            break;
+        case ParserState::Command_Device:
+            if (data == Command::EOM)
             {
-                if (_command != CommandType::Direction)
-                {
-                    _error = ParserError::InvalidParameter;
-                    return false;
-                }
-                _params[0] = data;
-                _state = ParserState::Parameter;
+                _state = ParserState::Error;
+                _error = ParserError::InvalidCommand;
+                // serial.Transmit.WriteLine("E1");
                 return true;
             }
-            if (data >= '0' && data <= '9')
-            {
-                if (_command != CommandType::Speed)
-                {
-                    _error = ParserError::InvalidParameter;
-                    return false;
-                }
-                _params[0] = data - '0';
-                _state = ParserState::Parameter;
-                return true;
-            }
-            if (data == 'o')
-            {
-                if (_command != CommandType::Power)
-                {
-                    _error = ParserError::InvalidParameter;
-                    return false;
-                }
-                _params[0] = data;
-                _state = ParserState::Parameter;
-                return true;
-            }
-            // no param
-            else if (data == '\n' &&
-                     _command == CommandType::Power)
+            _command.MessageId = data;
+            _state = ParserState::Command_Message;
+            // serial.Transmit.Write("M:");
+            // serial.Transmit.WriteLine(data);
+            break;
+        case ParserState::Command_Message:
+            if (data == Command::EOM)
             {
                 _state = ParserState::Complete;
+                // serial.Transmit.WriteLine("C0");
                 return true;
             }
-
-            _state = ParserState::Error;
-            _error = ParserError::InvalidParameter;
-            return false;
-
-        case ParserState::Parameter:
-            if (data == '\n' &&
-                _state != ParserState::Error)
+            _params.Add(data);
+            _state = ParserState::Parameters;
+            // serial.Transmit.Write("P0:");
+            // serial.Transmit.WriteLine(data);
+            return true;
+        case ParserState::Parameters:
+            if (data == Command::EOM)
             {
                 _state = ParserState::Complete;
+                // serial.Transmit.WriteLine("C1");
                 return true;
             }
-            return false;
-
+            _params.Add(data);
+            // serial.Transmit.Write("P1:");
+            // serial.Transmit.WriteLine(data);
+            return true;
         default:
-            return false;
+            //_state = ParserState::Idle;
+            break;
         }
+
+        return false;
     }
 
     bool Dispatch()
     {
-        if (_state != ParserState::Complete)
-            return false;
-
-        switch (_command)
+        // build typed command
+        Command *typedCommand = nullptr;
+        if (!TryBuildTypedCommand(_command, _slice, &typedCommand))
         {
-        case CommandType::Power:
-            BaseT::OnPower(_params[0] == 'o');
-            return true;
-        case CommandType::Speed:
-            BaseT::OnSpeed(_params[0]);
-            return true;
-        case CommandType::Direction:
-            BaseT::OnDirection(_params[0] == 'f');
-            return true;
-        default:
+            // serial.Transmit.WriteLine("TypedCmd Failed");
             return false;
         }
+        // global commands
+        if (OnGlobalCommand<GlobalResetCommand>(typedCommand, GlobalMessages::Reset))
+            return true;
+
+        // node commands
+        // if (OnNodeCommand<NodeResetCommand>(typedCommand, NodeMessages::Reset))
+        //     return true;
+        if (OnNodeCommand<BlockPowerCommand>(typedCommand, NodeMessages::BlockPower))
+            return true;
+        if (OnNodeCommand<BlockSpeedCommand>(typedCommand, NodeMessages::BlockSpeed))
+            return true;
+
+        // device commands
+        // if (OnDeviceCommand(typedCommand, DeviceMessages::Reset))
+        //     return true;
+
+        // serial.Transmit.WriteLine("No Dispatch");
+        return false;
     }
 
     void Clear()
     {
         _state = ParserState::Idle;
-        _command = CommandType::None;
         _error = ParserError::NoError;
+        _command.NodeId = Command::NoneId;
+        _command.DeviceId = Command::NoneId;
+        _command.MessageId = Command::NoneId;
+        _params.Clear();
     }
 
     bool IsError() const
@@ -174,7 +167,44 @@ public:
 
 private:
     ParserState _state = ParserState::Idle;
-    CommandType _command = CommandType::None;
     ParserError _error = ParserError::NoError;
-    FixedArray<uint8_t, 1> _params;
+    Command _command;
+    Collection<FixedArray<uint8_t, 8>> _params;
+    CommandBuffer _slice;
+
+    template <typename CommandT>
+    bool OnGlobalCommand(Command *typedCommand, GlobalMessages message)
+    {
+        if (_command.IsGlobalMessage(message) &&
+            CommandT::IsValidMessage(message))
+        {
+            CommandHandlerT::OnCommand(static_cast<CommandT *>(typedCommand));
+            return true;
+        }
+        return false;
+    }
+
+    template <typename CommandT>
+    bool OnNodeCommand(Command *typedCommand, NodeMessages message)
+    {
+        if (_command.IsNodeMessage(message) &&
+            CommandT::IsValidMessage(message))
+        {
+            CommandHandlerT::OnCommand(static_cast<CommandT *>(typedCommand));
+            return true;
+        }
+        return false;
+    }
+
+    template <typename CommandT>
+    bool OnDeviceCommand(Command *typedCommand, DeviceMessages message)
+    {
+        if (_command.IsDeviceMessage(message) &&
+            CommandT::IsValidMessage(message))
+        {
+            CommandHandlerT::OnCommand(static_cast<CommandT *>(typedCommand));
+            return true;
+        }
+        return false;
+    }
 };
