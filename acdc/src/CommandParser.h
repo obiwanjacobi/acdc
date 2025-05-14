@@ -13,7 +13,6 @@ extern Serial serial;
 template <class CommandHandlerT>
 class CommandParser : public CommandHandlerT
 {
-
 public:
     enum class ParserState : uint8_t
     {

@@ -4,41 +4,6 @@
 #include "atl/Debug.h"
 #include "atl/StringUtils.h"
 
-// https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library/blob/master/Adafruit_PWMServoDriver.cpp
-// https://github.com/adafruit/Adafruit_BusIO/blob/master/Adafruit_I2CDevice.cpp
-
-#define PCA9685_MODE1 0x00
-#define PCA9685_MODE2 0x01
-#define PCA9685_SUBADR1 0x02
-#define PCA9685_SUBADR2 0x03
-#define PCA9685_SUBADR3 0x04
-#define PCA9685_ALLCALLADR 0x05
-#define PCA9685_LED0_ON_L 0x06
-#define PCA9685_LED0_ON_H 0x07
-#define PCA9685_LED0_OFF_L 0x08
-#define PCA9685_LED0_OFF_H 0x09
-// ... till LED15, 4 registers per LED
-#define PCA9685_ALL_LED_ON_L 0xFA
-#define PCA9685_ALL_LED_ON_H 0xFB
-#define PCA9685_ALL_LED_OFF_L 0xFC
-#define PCA9685_ALL_LED_OFF_H 0xFD
-#define PCA9685_PRESCALE 0xFE
-
-// mode 1 bits
-#define PCA9685_MODE1_RESTART 7
-#define PCA9685_MODE1_EXTCLK 6
-#define PCA9685_MODE1_AI 5
-#define PCA9685_MODE1_SLEEP 4
-#define PCA9685_MODE1_SUB1 3
-#define PCA9685_MODE1_SUB2 2
-#define PCA9685_MODE1_SUB3 1
-#define PCA9685_MODE1_ALLCALL 0
-// mode 2 bits
-#define PCA9685_MODE2_INVRT 4
-#define PCA9685_MODE2_OCH 3
-#define PCA9685_MODE2_OUTDRV 2
-#define PCA9685_MODE2_OUTNE_1 1
-#define PCA9685_MODE2_OUTNE_0 0
 // prescale value range
 #define PCA9685_PRESCALE_MIN 3
 #define PCA9685_PRESCALE_MAX 255
@@ -46,7 +11,7 @@
 #define PCA9685_I2C_DEFAULT_ADDRESS 0x40
 #define PCA9685_FREQUENCY 25000000
 
-enum class PCA9685_Pins
+enum class PCA9685_Pins : uint8_t
 {
     Pin0 = 0,
     Pin1 = 1,
@@ -71,8 +36,8 @@ class PCA9685 : public I2cT
 {
     static_assert((Address & 0x80) == 0, "PCA9685 Address highest bit (7) must be cleared. It is not used in I2C.");
 
-#define CheckResult(result, value) \
-    if (I2cT::HasFailed(result))   \
+#define PropagateResult(result, value) \
+    if (I2cT::HasFailed(result))       \
         return value;
 
     const uint8_t DefaultAddress = 0x40;
@@ -85,29 +50,39 @@ public:
     };
 
     // does not open Twi/I2c
-    static bool Open(uint16_t prescale, ClockSource clockSource = ClockSource::Internal)
+    // prescale:
+    //  100 = ~70Hz
+    //  70 = ~100Hz
+    //  50 = ~137Hz
+    //  20 = ~342Hz
+    //  12 = ~552Hz
+    //  10 = ~655Hz
+    //  0 = ~1800Hz
+    static bool Open(uint16_t prescale = 0, ClockSource clockSource = ClockSource::Internal)
     {
+        // TODO: check prescale against valid range
+
         // set sleep mode and auto increment
-        uint8_t mode1 = (1 << PCA9685_MODE1_SLEEP);
-        if (!WriteReg(PCA9685_MODE1, mode1))
+        uint8_t mode1 = getMask(Mode1::Sleep);
+        if (!WriteMode1(mode1))
             return false;
 
         // set clock source
         if (clockSource == ClockSource::External)
         {
-            mode1 |= (1 << PCA9685_MODE1_EXTCLK);
-            if (!WriteReg(PCA9685_MODE1, mode1))
+            mode1 |= getMask(Mode1::ExternalClock);
+            if (!WriteMode1(mode1))
                 return false;
         }
 
         // set prescale
-        if (!WriteReg(PCA9685_PRESCALE, prescale))
+        if (!WriteReg(Register::Prescale, prescale))
             return false;
 
         // clear sleep mode
-        mode1 &= ~(1 << PCA9685_MODE1_SLEEP);
-        mode1 |= (1 << PCA9685_MODE1_AI) | (1 << PCA9685_MODE1_RESTART);
-        if (!WriteReg(PCA9685_MODE1, mode1))
+        mode1 &= ~getMask(Mode1::Sleep);
+        mode1 |= getMask(Mode1::AutoIncrement) | getMask(Mode1::Restart);
+        if (!WriteMode1(mode1))
             return false;
 
         return true;
@@ -129,18 +104,19 @@ public:
         // fullOff LEDn_OFF_H:4 = 0b1
 
         TwiResult result = I2cT::Start(Address, false);
-        CheckResult(result, false);
-        result = I2cT::Write(PCA9685_LED0_ON_L + (uint8_t)pin * 4);
-        CheckResult(result, false);
+        PropagateResult(result, false);
+        result = I2cT::Write((uint8_t)Register::Led0OnL + (uint8_t)pin * 4);
+        PropagateResult(result, false);
         result = I2cT::Write(on & 0xFF);
-        CheckResult(result, false);
+        PropagateResult(result, false);
         result = I2cT::Write(on >> 8);
-        CheckResult(result, false);
+        PropagateResult(result, false);
         result = I2cT::Write(off & 0xFF);
-        CheckResult(result, false);
+        PropagateResult(result, false);
         result = I2cT::Write(off >> 8);
-        CheckResult(result, false);
-        I2cT::Stop();
+        PropagateResult(result, false);
+        result = I2cT::Stop();
+        PropagateResult(result, false);
 
         return true;
     }
@@ -150,7 +126,7 @@ public:
         uint8_t mode1 = 0;
         if (TryReadMode1(&mode1))
         {
-            BitFlag::Set(mode1, PCA9685_MODE1_SLEEP, true);
+            BitFlag::Set(mode1, (uint8_t)Mode1::Sleep, true);
             WriteMode1(mode1);
         }
     }
@@ -159,7 +135,7 @@ public:
         uint8_t mode1 = 0;
         if (TryReadMode1(&mode1))
         {
-            BitFlag::Set(mode1, PCA9685_MODE1_SLEEP, false);
+            BitFlag::Set(mode1, (uint8_t)Mode1::Sleep, false);
             WriteMode1(mode1);
         }
     }
@@ -197,16 +173,16 @@ public:
 
         if (isTotem)
         {
-            mode2 |= (1 << PCA9685_MODE2_OUTDRV);
+            mode2 |= getMask(Mode2::OutputDriver);
         }
 
         switch (outputEnable)
         {
         case OutputEnable::OutputDriver:
-            mode2 |= (1 << PCA9685_MODE2_OUTNE_0);
+            mode2 |= getMask(Mode2::OutputEnable0);
             break;
         case OutputEnable::HighImpedance:
-            mode2 |= (1 << PCA9685_MODE2_OUTNE_1);
+            mode2 |= getMask(Mode2::OutputEnable1);
             break;
         default:
             break;
@@ -218,36 +194,86 @@ public:
         }
         if (outputInverted == OutputInverted::Inverted)
         {
-            mode2 |= (1 << PCA9685_MODE2_INVRT);
+            mode2 |= getMask(Mode2::Invert);
         }
 
-        return WriteReg(PCA9685_MODE2, mode2);
+        return WriteReg(Register::Mode2, mode2);
     }
 
 private:
-    PCA9685() {}
-    static bool TryReadPrescale(uint8_t *outData)
+    enum class Register : uint8_t
     {
-        return TryReadReg(PCA9685_PRESCALE, outData);
+        Mode1 = 0x00,
+        Mode2 = 0x01,
+        SubAdr1 = 0x02,
+        SubAdr2 = 0x03,
+        SubAdr3 = 0x04,
+        AllCallAdr = 0x05,
+        Led0OnL = 0x06,
+        Led0OnH = 0x07,
+        Led0OffL = 0x08,
+        Led0OffH = 0x09,
+        // ... till LED15, 4 registers per LED
+        AllLedOnL = 0xFA,
+        AllLedOnH = 0xFB,
+        AllLedOffL = 0xFC,
+        AllLedOffH = 0xFD,
+        Prescale = 0xFE,
+    };
+
+    enum class Mode1 : uint8_t
+    {
+        AllCall = 0,
+        Sub3 = 1,
+        Sub2 = 2,
+        Sub1 = 3,
+        Sleep = 4,
+        AutoIncrement = 5,
+        ExternalClock = 6,
+        Restart = 7
+    };
+
+    enum class Mode2 : uint8_t
+    {
+        OutputEnable0 = 0,
+        OutputEnable1 = 1,
+        OutputDriver = 2,
+        OutputChangeOnStop = 3,
+        Invert = 4
+    };
+
+    static uint8_t getMask(Register bit)
+    {
+        return BitFlag::getMask<uint8_t>((uint8_t)bit);
     }
+    static uint8_t getMask(Mode1 bit)
+    {
+        return BitFlag::getMask<uint8_t>((uint8_t)bit);
+    }
+    static uint8_t getMask(Mode2 bit)
+    {
+        return BitFlag::getMask<uint8_t>((uint8_t)bit);
+    }
+
+    PCA9685() {}
 
     static bool TryReadMode1(uint8_t *outData)
     {
-        return TryReadReg(PCA9685_MODE1, outData);
+        return TryReadReg(Register::Mode1, outData);
     }
 
-    static bool TryReadReg(uint8_t reg, uint8_t *outData)
+    static bool TryReadReg(Register reg, uint8_t *outData)
     {
         return I2cT::TryReadRegister8(Address, reg, outData) == TwiResult::Ok;
     }
 
     static bool WriteMode1(uint8_t data)
     {
-        return WriteReg(PCA9685_MODE1, data);
+        return WriteReg(Register::Mode1, data);
     }
 
-    static bool WriteReg(uint8_t reg, uint8_t data)
+    static bool WriteReg(Register reg, uint8_t data)
     {
-        return I2cT::WriteRegister8(Address, reg, data) == TwiResult::Ok;
+        return I2cT::WriteRegister8(Address, (uint8_t)reg, data) == TwiResult::Ok;
     }
 };

@@ -11,7 +11,7 @@ public:
      */
     Task_BeginParams(Run, PwmOutputPinT *pwmOutputPin)
     {
-        Task_YieldUntil(DelaysT::Wait(getId(), Timeout));
+        Task_YieldUntil(DelaysT::Delay(getId(), Timeout));
         pwmOutputPin->Write(_pwm);
         _pwm += 10;
     }

@@ -1,10 +1,8 @@
 #pragma once
 #include <stdint.h>
 
-// BaseT is the class that will handle/implement the actual commands
-
-template <class BaseT>
-class CommandParser : public BaseT
+template <class CommandHandlerT>
+class SimpleCommandParser : public CommandHandlerT
 {
 public:
     enum class CommandType : uint8_t
@@ -31,7 +29,7 @@ public:
         InvalidParameter
     };
 
-    CommandParser()
+    SimpleCommandParser()
     {
         Clear();
     }
@@ -43,19 +41,19 @@ public:
         case ParserState::Complete:
         case ParserState::Error:
         case ParserState::Idle:
-            if (data == 'P')
+            if (data == 'P' || data == 'p')
             {
                 _command = CommandType::Power;
                 _state = ParserState::Command;
                 return true;
             }
-            if (data == 'S')
+            if (data == 'S' || data == 's')
             {
                 _command = CommandType::Speed;
                 _state = ParserState::Command;
                 return true;
             }
-            if (data == 'D')
+            if (data == 'D' || data == 'd')
             {
                 _command = CommandType::Direction;
                 _state = ParserState::Command;
@@ -137,13 +135,13 @@ public:
         switch (_command)
         {
         case CommandType::Power:
-            BaseT::OnPower(_params[0] == 'o');
+            CommandHandlerT::OnPower(_params[0] == 'o');
             return true;
         case CommandType::Speed:
-            BaseT::OnSpeed(_params[0]);
+            CommandHandlerT::OnSpeed(_params[0]);
             return true;
         case CommandType::Direction:
-            BaseT::OnDirection(_params[0] == 'f');
+            CommandHandlerT::OnDirection(_params[0] == 'f');
             return true;
         default:
             return false;
@@ -155,6 +153,7 @@ public:
         _state = ParserState::Idle;
         _command = CommandType::None;
         _error = ParserError::NoError;
+        _params[0] = 0;
     }
 
     bool IsError() const

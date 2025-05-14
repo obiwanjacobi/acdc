@@ -1,8 +1,7 @@
-#define DEBUG
+// #define DEBUG
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
-// #include <utils/delay.h>
 
 #include "../lib/DigitalInputPin.h"
 #include "../lib/Interupt.h"
@@ -25,8 +24,10 @@
 
 #include "Serial.h"
 #include "PwmTask.h"
-#include "CommandParser.h"
-#include "CommandHandler.h"
+// #include "CommandParser.h"
+// #include "CommandHandler.h"
+#include "SimpleCommandParser.h"
+#include "SimpleCommandHandler.h"
 #include <ReadWithState.h>
 #include "BlockDriverTask.h"
 
@@ -41,10 +42,11 @@ TimeoutTask<ToggleOutputPinTaskBase<PortPins::B5>, Scheduler, ToMilliseconds(Tim
 // Servo360OutputPin<ServoTimer1, PortPins::B1> pwmServo1Pin(&servoTimer);
 // Servo360OutputPin<ServoTimer1, PortPins::B2> pwmServo2Pin(&servoTimer);
 
-const char welcomeMsg[] PROGMEM = "AC/DC v1.0";
-const char debugMsg[] PROGMEM = "Debug is enabled";
+// const char welcomeMsg[] PROGMEM = "AC/DC v1.0";
+// const char debugMsg[] PROGMEM = "Debug is enabled";
 
-CommandParser<CommandHandler> commandParser;
+// CommandParser<CommandHandler> commandParser;
+SimpleCommandParser<SimpleCommandHandler> commandParser;
 
 // BlockControllerTask<Scheduler> blockControllerTask;
 
@@ -58,10 +60,11 @@ public:
         // indication that the program is running
         blinkLedTask.Run();
 
-        // blockControllerTask.Run(blockController0, blockController1, blockController2, blockController3);
-
         ReadSerial();
         ReadSensors();
+
+        // tredding water
+        Scheduler::SpinWait(Scheduler::ForMilliseconds(20));
     }
 
     void ReadSerial()
@@ -71,9 +74,6 @@ public:
             uint8_t data;
             if (serial.Receive.TryRead(&data))
             {
-                // serial echo
-                // serial.Transmit.Write((const char)data);
-
                 ParseCommand(data);
             }
         }
@@ -82,16 +82,20 @@ public:
     bool ParseCommand(char data)
     {
         bool parsed = commandParser.Parse(data);
+        if (parsed)
+            serial.Transmit.Write(data);
 
         if (commandParser.IsError())
         {
-            // serial.Transmit.WriteLine("?");
+            serial.Transmit.WriteLine("?");
             commandParser.Clear();
         }
         else if (commandParser.IsComplete())
         {
-            commandParser.Dispatch();
-            // serial.Transmit.WriteLine("ok");
+            if (commandParser.Dispatch())
+                serial.Transmit.WriteLine("ok");
+            else
+                serial.Transmit.WriteLine("err");
             commandParser.Clear();
         }
 
@@ -100,16 +104,24 @@ public:
 
     void ReadSensors()
     {
-        BlockOccupationEvent *blockEvent = nullptr;
-        if (commandParser.TryCreateBlockOccupationEvent(&blockEvent))
+        uint8_t blockFlags = 0;
+        if (commandParser.TryReadBlocks(&blockFlags))
         {
-            FixedArray<uint8_t, 10> array;
-            CommandBuffer buffer(array.getBuffer(), array.getCapacity());
-            uint8_t l = blockEvent->Serialize(buffer);
-            // shrink buffer to what has actually being written
-            CommandBuffer data(buffer, l);
-            serial.Transmit.WriteBuffer(data);
+            serial.Transmit.WriteLine(blockFlags);
         }
+
+        // BlockOccupationEvent *blockEvent = nullptr;
+        //  if (commandParser.TryCreateBlockOccupationEvent(&blockEvent))
+        // {
+        // FixedArray<uint8_t, 10> array;
+        // CommandBuffer buffer(array.getBuffer(), array.getCapacity());
+        // uint8_t l = blockEvent->Serialize(buffer);
+        // // shrink buffer to what has actually being written
+        // CommandBuffer data(buffer, l);
+        // serial.Transmit.WriteBuffer(data);
+
+        // uint8_t flags = blockEvent->OccupationFlags;
+        // serial.Transmit.WriteLine(flags);
     }
 
     void Initialize()
@@ -124,23 +136,23 @@ public:
         // enable global interrupts
         Interupts::Enable();
 
-        if (Twi::Open(I2cFrequency::Normal, false) != TwiResult::Ok)
+        if (Twi::Open(I2cFrequency::Normal, true) != TwiResult::Ok)
             Stop(2);
 
-        if (!PwmModuleT::Open(100) ||
+        if (!PwmModuleT::Open(70) ||
             !PwmModuleT::setOutputMode(PwmModuleT::OutputDriver::PushPull))
             Stop(3);
 
         if (!commandParser.Open())
             Stop(4);
 
-        FixedString<20> temp;
+        // FixedString<20> temp;
         // welcome message
-        temp.CopyFromProgMem(welcomeMsg);
+        // temp.CopyFromProgMem(welcomeMsg);
         // serial.Transmit.WriteLine(temp);
 
-        temp.CopyFromProgMem(debugMsg);
-        LogDebug(temp);
+        // temp.CopyFromProgMem(debugMsg);
+        // LogDebug(temp);
     }
 
     void Stop(uint8_t code)
@@ -155,8 +167,8 @@ public:
 
         if (code > 1)
         {
-            // serial.Transmit.Write("Stop: ");
-            // serial.Transmit.WriteLine(code);
+            serial.Transmit.Write("Stop: ");
+            serial.Transmit.WriteLine(code);
         }
 
         blinkLedTask.Write(true);

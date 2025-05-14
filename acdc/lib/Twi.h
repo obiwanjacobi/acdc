@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+
 #include "atl/Bit.h"
 #include "Port.h"
 #include "PowerReduction.h"
@@ -14,6 +15,7 @@ enum class I2cFrequency : uint16_t
 enum class TwiResult : uint8_t
 {
     Ok,
+    Timeout,
     InvalidParameter,
     StartWriteFailed,
     StartReadFailed,
@@ -23,7 +25,10 @@ enum class TwiResult : uint8_t
 
 #define PromoteFailure(result)   \
     if (TwiT::HasFailed(result)) \
-        return result;
+    {                            \
+        TwiT::Abort();           \
+        return result;           \
+    }
 
 #define TWI_STATUS_MASK 0xF8
 
@@ -74,20 +79,14 @@ public:
         PortPin<PortPins::C4>::EnablePullup(enablePullups);
         PortPin<PortPins::C5>::EnablePullup(enablePullups);
 
-        PowerReduction::Twi(PowerState::On);
+        Enable(true);
 
         // Calculate bit rate register value for desired frequency
         // TWBR = ((CPU_FREQ / SCL_FREQ) - 16) / 2
-        uint8_t prescaler = 0; // No prescaling (TWSR bits 0-1 = 00)
-        uint8_t bitRateReg = ((F_CPU / frequency) - 16) / (2 << prescaler);
-
-        // Set bit rate
-        TWBR = bitRateReg;
-
-        // Clear prescaler bits and set to 0
-        TWSR &= ~((1 << TWPS0) | (1 << TWPS1));
-
-        Enable(true);
+        uint8_t prescaler = 0 & 0x03;
+        uint8_t bitRate = ((F_CPU / frequency) - 16) / (2 << prescaler);
+        TWBR = bitRate;
+        TWSR |= prescaler;
 
         return TwiResult::Ok;
     }
@@ -95,11 +94,11 @@ public:
     static void Close()
     {
         Enable(false);
-        PowerReduction::Twi(PowerState::Off);
     }
 
     static void Enable(bool enable = true)
     {
+        PowerReduction::Twi(enable ? PowerState::On : PowerState::Off);
         BitFlag::Set(TWCR, TWEN, enable);
     }
 
@@ -111,14 +110,16 @@ public:
 
         // Send START condition
         TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN);
-        WaitForComplete();
+        if (!WaitForComplete())
+            return TwiResult::Timeout;
 
         // Check status
         if ((TWSR & TWI_STATUS_MASK) != (read ? TWI_STATUS_REPEATED_START : TWI_STATUS_START_SUCCESS))
             return read ? TwiResult::StartReadFailed : TwiResult::StartWriteFailed;
 
         // Send address and R/W bit
-        Send((address << 1) | (read ? 1 : 0));
+        if (!Send((address << 1) | (read ? 1 : 0)))
+            return TwiResult::Timeout;
 
         // Check if address was acknowledged
         if ((TWSR & TWI_STATUS_MASK) != (read ? TWI_STATUS_SLA_R_ACK : TWI_STATUS_SLA_W_ACK))
@@ -128,14 +129,19 @@ public:
     }
 
     // Send STOP condition
-    static void Stop()
+    static TwiResult Stop(uint32_t spinTimeout = 500)
     {
         // Transmit STOP condition
         TWCR = (1 << TWINT) | (1 << TWEN) | (1 << TWSTO);
 
         // Wait until STOP condition is executed and bus released
         while (TWCR & (1 << TWSTO))
-            ;
+        {
+            if (spinTimeout-- == 0)
+                return TwiResult::Timeout;
+        }
+
+        return TwiResult::Ok;
     }
 
     // Send data byte
@@ -151,25 +157,29 @@ public:
     }
 
     // Read data byte with ACK (more bytes to follow)
-    static uint8_t ReadAck()
+    static bool TryReadAck(uint8_t *outData)
     {
         // Signal acknowledgment after reception
         TWCR = (1 << TWINT) | (1 << TWEN) | (1 << TWEA);
-        WaitForComplete();
+        if (!WaitForComplete())
+            return false;
 
         // Return received data
-        return TWDR;
+        *outData = TWDR;
+        return true;
     }
 
     // Read data byte with NACK (last byte)
-    static uint8_t ReadNack()
+    static bool TryReadNack(uint8_t *outData)
     {
         // Signal no acknowledgment after reception
         TWCR = (1 << TWINT) | (1 << TWEN);
-        WaitForComplete();
+        if (!WaitForComplete())
+            return false;
 
         // Return received data
-        return TWDR;
+        *outData = TWDR;
+        return true;
     }
 
     static bool IsValidAddress(uint8_t address)
@@ -182,18 +192,48 @@ public:
         return result != TwiResult::Ok;
     }
 
+    static void Abort()
+    {
+        Stop();
+
+        // Clear control register except for TWEN bit to keep interface enabled
+        TWCR = (1 << TWEN);
+        // Reset data register
+        TWDR = 0xFF;
+        // Clear any pending interrupt flag (by writing 1 to it)
+        TWCR |= (1 << TWINT);
+
+        SpinWait(10);
+    }
+
 private:
     Twi() {}
-    static void Send(uint8_t data)
+
+    static bool Send(uint8_t data)
     {
         TWDR = data;
         TWCR = (1 << TWINT) | (1 << TWEN);
-        WaitForComplete();
+        return WaitForComplete();
     }
-    static void WaitForComplete()
+
+    static bool WaitForComplete(uint32_t spinTimeout = 500, uint16_t spinDelay = 0)
     {
         while (!(TWCR & (1 << TWINT)))
-            ;
+        {
+            if (spinTimeout-- == 0)
+                return false;
+
+            SpinWait(spinDelay);
+        }
+        return true;
+    }
+
+    static void SpinWait(uint16_t spinDelay)
+    {
+        while (spinDelay-- > 0)
+        {
+            __asm__ __volatile__("nop");
+        }
     }
 };
 
@@ -212,7 +252,8 @@ public:
         result = TwiT::Write(data);
         PromoteFailure(result);
 
-        TwiT::Stop();
+        result = TwiT::Stop();
+        PromoteFailure(result);
 
         return TwiResult::Ok;
     }
@@ -231,7 +272,8 @@ public:
         result = TwiT::Write(data & 0xFF);
         PromoteFailure(result);
 
-        TwiT::Stop();
+        result = TwiT::Stop();
+        PromoteFailure(result);
 
         return TwiResult::Ok;
     }
@@ -256,9 +298,11 @@ public:
         result = TwiT::Start(address, true);
         PromoteFailure(result);
 
-        *outData = TwiT::ReadNack();
+        if (!TwiT::TryReadNack(outData))
+            return TwiResult::Timeout;
 
-        TwiT::Stop();
+        result = TwiT::Stop();
+        PromoteFailure(result);
 
         return TwiResult::Ok;
     }
@@ -275,12 +319,18 @@ public:
         result = TwiT::Start(address, true);
         PromoteFailure(result);
 
-        uint8_t data = TwiT::ReadAck();
+        uint8_t data = 0;
+        if (!TwiT::TryReadAck(&data))
+            return TwiResult::Timeout;
+
         *outData = (uint16_t)data << 8;
-        data = TwiT::ReadAck();
+        if (!TwiT::TryReadAck(&data))
+            return TwiResult::Timeout;
+
         *outData |= data;
 
-        TwiT::Stop();
+        result = TwiT::Stop();
+        PromoteFailure(result);
 
         return TwiResult::Ok;
     }

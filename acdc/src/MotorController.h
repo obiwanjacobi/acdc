@@ -27,6 +27,11 @@ public:
         _dir = direction;
     }
 
+    Direction getDirection() const
+    {
+        return _dir;
+    }
+
     void setSpeed(uint8_t speed)
     {
         if (_dir == Direction::Forward)

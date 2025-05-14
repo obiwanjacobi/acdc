@@ -27,7 +27,7 @@ public:
      *  \param id is the identification of the delay.
      *  \return Returns true if the id is listed.
      */
-    static bool IsWaiting(uint16_t id)
+    static bool IsRunning(uint16_t id)
     {
         for (int i = 0; i < MaxItems; i++)
         {
@@ -81,7 +81,7 @@ public:
      *  \param time is the delay time in units the TimeT was constructed with.
      *  \return Returns true to indicate the delay has reached zero.
      */
-    static bool Wait(uint16_t id, TimeUnitT time)
+    static bool Delay(uint16_t id, TimeUnitT time)
     {
         if (id == InvalidId)
             return false;

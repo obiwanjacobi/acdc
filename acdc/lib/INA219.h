@@ -48,7 +48,7 @@ public:
         ShuntAndBusTriggered = 0x03,
         AdcOff = 0x04,
         ShuntContinuous = 0x05,
-        BusContunous = 0x06,
+        BusContinuous = 0x06,
         ShuntAndBusContinuous = 0x07
     };
 

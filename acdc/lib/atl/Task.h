@@ -28,6 +28,7 @@
     bool name()               \
     {                         \
         bool _yield_ = false; \
+        (void)_yield_;        \
         switch (_task)        \
         {                     \
         case 0:
@@ -40,6 +41,7 @@
     bool name(args)                 \
     {                               \
         bool _yield_ = false;       \
+        (void)_yield_;              \
         switch (_task)              \
         {                           \
         case 0:

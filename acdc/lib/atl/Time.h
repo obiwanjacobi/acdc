@@ -50,12 +50,12 @@ public:
         return _ticks;
     }
 
-    static uint32_t TimeForMilliseconds(uint32_t milliseconds)
+    static uint32_t ForMilliseconds(uint32_t milliseconds)
     {
         return ::getMilliseconds<ResolutionId>(milliseconds);
     }
 
-    static uint32_t TimeForMicroseconds(uint32_t microseconds)
+    static uint32_t ForMicroseconds(uint32_t microseconds)
     {
         return ::getMicroseconds<ResolutionId>(microseconds);
     }
@@ -64,6 +64,10 @@ public:
     {
         return ResolutionId;
     }
+
+    // blocks caller until delay has elapsed
+    // delay in TimeResolution
+    static void SpinWait(uint32_t delay);
 
 private:
     Time() {}
@@ -93,4 +97,20 @@ uint32_t Time<TimeResolution::Milliseconds>::Update()
     uint32_t previous = _ticks;
     _ticks = TimerCounterT::getMilliseconds();
     return _ticks - previous;
+}
+
+template <>
+void Time<TimeResolution::Milliseconds>::SpinWait(uint32_t delay)
+{
+    uint32_t start = TimerCounterT::getMilliseconds();
+    while (TimerCounterT::getMilliseconds() - start < delay)
+        ;
+}
+
+template <>
+void Time<TimeResolution::Microseconds>::SpinWait(uint32_t delay)
+{
+    uint32_t start = TimerCounterT::getMicroseconds();
+    while (TimerCounterT::getMicroseconds() - start < delay)
+        ;
 }

@@ -9,8 +9,8 @@
 
 extern Serial serial;
 
-template <class BlockT>
-class Block : public BlockT
+template <class BlockControllerT>
+class Block : public BlockControllerT
 {
 public:
     bool TryReadOccupied()
@@ -33,7 +33,7 @@ public:
         // }
         // }
 
-        bool on = BlockT::IsOccupied(250, 100);
+        bool on = BlockControllerT::IsOccupied(150, 75);
         if (_occupied != on)
         {
             _occupied = on;
@@ -65,21 +65,21 @@ private:
 
 #define ValueCount 6
 
-    Collection<FixedArray<int16_t, ValueCount>> occupiedValues;
+    // Collection<FixedArray<int16_t, ValueCount>> occupiedValues;
 
-    bool GetOccupiedValue(int16_t threshold) const
-    {
-        int16_t count = occupiedValues.getCount();
-        int16_t overThresholdCount = 0;
+    // bool GetOccupiedValue(int16_t threshold) const
+    // {
+    //     int16_t count = occupiedValues.getCount();
+    //     int16_t overThresholdCount = 0;
 
-        for (int16_t i = 0; i < count; i++)
-        {
-            if (occupiedValues[i] > threshold)
-                overThresholdCount++;
-        }
+    //     for (int16_t i = 0; i < count; i++)
+    //     {
+    //         if (occupiedValues[i] > threshold)
+    //             overThresholdCount++;
+    //     }
 
-        return overThresholdCount >= count / 2;
-    }
+    //     return overThresholdCount >= count / 2;
+    // }
 };
 
 typedef Block<BlockController<MotorControllerT_0, Ina219T_0>> BlockControllerT_0;
