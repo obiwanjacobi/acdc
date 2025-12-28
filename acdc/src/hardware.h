@@ -17,8 +17,8 @@ typedef INA219<I2cT, 0x44> Ina219T_2;
 typedef INA219<I2cT, 0x45> Ina219T_3;
 typedef PCA9685<I2cT, 0x46> PwmModuleT;
 
-typedef VL53L0X<I2cT, DigitalOutputPin<PortPins::D6>, 0x50> VL53L0XT_0;
-typedef VL53L0X<I2cT, DigitalOutputPin<PortPins::D7>, 0x51> VL53L0XT_1;
+// typedef VL53L0X<I2cT, DigitalOutputPin<PortPins::D6>, 0x50> VL53L0XT_0;
+// typedef VL53L0X<I2cT, DigitalOutputPin<PortPins::D7>, 0x51> VL53L0XT_1;
 
 // clang-format off
 template <const PCA9685_Pins PwmPinId, const PortPins In1PinId, const PortPins In2PinId>
@@ -31,7 +31,7 @@ class MotorControllerT : public MotorController<
 > {};
 // clang-format on
 
-// typedef MotorControllerT<PCA9685_Pins::Pin0, PortPins::D2, PortPins::D3> MotorControllerT_0;
-// typedef MotorControllerT<PCA9685_Pins::Pin1, PortPins::D4, PortPins::D5> MotorControllerT_1;
-// typedef MotorControllerT<PCA9685_Pins::Pin2, PortPins::D6, PortPins::D7> MotorControllerT_2;
-// typedef MotorControllerT<PCA9685_Pins::Pin3, PortPins::B0, PortPins::B1> MotorControllerT_3;
+typedef MotorControllerT<PCA9685_Pins::Pin0, PortPins::D2, PortPins::D3> MotorControllerT_0;
+typedef MotorControllerT<PCA9685_Pins::Pin1, PortPins::D4, PortPins::D5> MotorControllerT_1;
+typedef MotorControllerT<PCA9685_Pins::Pin2, PortPins::D6, PortPins::D7> MotorControllerT_2;
+typedef MotorControllerT<PCA9685_Pins::Pin3, PortPins::B0, PortPins::B1> MotorControllerT_3;

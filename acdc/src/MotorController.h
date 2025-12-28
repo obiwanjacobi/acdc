@@ -7,9 +7,11 @@ enum class Direction
     Backward
 };
 
-template <class BaseT>
-class MotorController : public BaseT
+template <class TB6612FNGT>
+class MotorController : public TB6612FNGT
 {
+    typedef TB6612FNGT BaseT;
+
 public:
     MotorController()
         : _dir(Direction::Forward)

@@ -21,15 +21,15 @@
 #include "../lib/atl/TimeResolution.h"
 #include "../lib/atl/TimeoutTask.h"
 #include "../lib/atl/ToggleOutputPinTaskBase.h"
+#include <ReadWithState.h>
 
 #include "Serial.h"
 #include "PwmTask.h"
 // #include "CommandParser.h"
 // #include "CommandHandler.h"
-// #include "SimpleCommandParser.h"
-// #include "SimpleCommandHandler.h"
-#include <ReadWithState.h>
-// #include "BlockDriverTask.h"
+#include "SimpleCommandParser.h"
+#include "SimpleCommandHandler.h"
+#include "BlockDriverTask.h"
 #include "hardware.h"
 
 const uint8_t MaxItems = 5;
@@ -44,12 +44,12 @@ TimeoutTask<ToggleOutputPinTaskBase<PortPins::B5>, Scheduler, ToMilliseconds(Tim
 // Servo360OutputPin<ServoTimer1, PortPins::B2> pwmServo2Pin(&servoTimer);
 
 // CommandParser<CommandHandler> commandParser;
-// SimpleCommandParser<SimpleCommandHandler> commandParser;
+SimpleCommandParser<SimpleCommandHandler> commandParser;
 
-// BlockControllerTask<Scheduler> blockControllerTask;
+BlockControllerTask<Scheduler> blockControllerTask;
 
-VL53L0XT_0 sensor0;
-VL53L0XT_1 sensor1;
+// VL53L0XT_0 sensor0;
+// VL53L0XT_1 sensor1;
 
 class Program
 {
@@ -61,72 +61,72 @@ public:
         // indication that the program is running
         blinkLedTask.Run();
 
-        // ReadSerial();
-        // ReadSensors();
+        ReadSerial();
+        ReadSensors();
 
-        if (sensor0.isMeasurementReady() && sensor1.isMeasurementReady())
-        {
-            uint16_t range0, range1;
+        // if (sensor0.isMeasurementReady() && sensor1.isMeasurementReady())
+        // {
+        //     uint16_t range0, range1;
 
-            sensor0.ReadRange_mm(&range0);
-            sensor1.ReadRange_mm(&range1);
+        //     sensor0.ReadRange_mm(&range0);
+        //     sensor1.ReadRange_mm(&range1);
 
-            serial.Transmit.Write("1: ");
-            serial.Transmit.Write(range0);
-            serial.Transmit.Write(" - 2: ");
-            serial.Transmit.Write(range1);
-            serial.Transmit.WriteLine();
-        }
+        //     serial.Transmit.Write("1: ");
+        //     serial.Transmit.Write(range0);
+        //     serial.Transmit.Write(" - 2: ");
+        //     serial.Transmit.Write(range1);
+        //     serial.Transmit.WriteLine();
+        // }
 
         // tredding water
         Scheduler::SpinWait(Scheduler::ForMilliseconds(20));
     }
 
-    // void ReadSerial()
-    // {
-    //     while (serial.Receive.getCount() > 0)
-    //     {
-    //         uint8_t data;
-    //         if (serial.Receive.TryRead(&data))
-    //         {
-    //             ParseCommand(data);
-    //         }
-    //     }
-    // }
+    void ReadSerial()
+    {
+        while (serial.Receive.getCount() > 0)
+        {
+            uint8_t data;
+            if (serial.Receive.TryRead(&data))
+            {
+                ParseCommand(data);
+            }
+        }
+    }
 
-    // bool ParseCommand(char data)
-    // {
-    //     bool parsed = commandParser.Parse(data);
-    //     if (parsed)
-    //         serial.Transmit.Write(data);
+    bool ParseCommand(char data)
+    {
+        bool parsed = commandParser.Parse(data);
+        if (parsed)
+            serial.Transmit.Write(data);
 
-    //     if (commandParser.IsError())
-    //     {
-    //         serial.Transmit.WriteLine("?");
-    //         commandParser.Clear();
-    //     }
-    //     else if (commandParser.IsComplete())
-    //     {
-    //         if (commandParser.Dispatch())
-    //             serial.Transmit.WriteLine("ok");
-    //         else
-    //             serial.Transmit.WriteLine("err");
-    //         commandParser.Clear();
-    //     }
+        if (commandParser.IsError())
+        {
+            serial.Transmit.WriteLine("?");
+            commandParser.Clear();
+        }
+        else if (commandParser.IsComplete())
+        {
+            if (commandParser.Dispatch())
+                serial.Transmit.WriteLine("ok");
+            else
+                serial.Transmit.WriteLine("err");
+            commandParser.Clear();
+        }
 
-    //     return parsed;
-    // }
+        return parsed;
+    }
 
     void ReadSensors()
     {
-        // uint8_t blockFlags = 0;
-        //  if (commandParser.TryReadBlocks(&blockFlags))
-        //  {
-        //      serial.Transmit.WriteLine(blockFlags);
-        //  }
+        uint8_t blockFlags = 0;
+        if (commandParser.TryReadBlocks(&blockFlags))
+        {
+            serial.Transmit.WriteLine(blockFlags);
+        }
 
         // BlockOccupationEvent *blockEvent = nullptr;
-        //  if (commandParser.TryCreateBlockOccupationEvent(&blockEvent))
+        // if (commandParser.TryCreateBlockOccupationEvent(&blockEvent))
         // {
         // FixedArray<uint8_t, 10> array;
         // CommandBuffer buffer(array.getBuffer(), array.getCapacity());
@@ -157,20 +157,20 @@ public:
         if (Twi::Open(I2cFrequency::Fast) != TwiResult::Ok)
             Stop(2);
 
-        // if (!PwmModuleT::Open(70) ||
-        //     !PwmModuleT::setOutputMode(PwmModuleT::OutputDriver::PushPull))
-        //     Stop(3);
+        if (!PwmModuleT::Open(70) ||
+            !PwmModuleT::setOutputMode(PwmModuleT::OutputDriver::PushPull))
+            Stop(3);
 
-        // if (!commandParser.Open())
-        //     Stop(4);
+        if (!commandParser.Open())
+            Stop(4);
 
-        if (!sensor0.Open())
-            Stop(5);
-        sensor0.StartContinuous();
+        // if (!sensor0.Open())
+        //     Stop(5);
+        // sensor0.StartContinuous();
 
-        if (!sensor1.Open())
-            Stop(6);
-        sensor1.StartContinuous();
+        // if (!sensor1.Open())
+        //     Stop(6);
+        // sensor1.StartContinuous();
     }
 
     void Stop(uint8_t code)

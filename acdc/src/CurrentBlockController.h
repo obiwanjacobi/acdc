@@ -6,7 +6,7 @@
 extern Serial serial;
 
 template <class MotorControllerT, class CurrentSensorT>
-class BlockController : public MotorControllerT
+class CurrentBlockController : public MotorControllerT
 {
 public:
     bool Open()

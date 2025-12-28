@@ -4,7 +4,8 @@
 #include "../lib/atl/FixedArray.h"
 #include "../lib/atl/Task.h"
 #include "Block.h"
-#include "BlockController.h"
+// #include "CurrentBlockController.h"
+#include "OptoBlockController.h"
 #include "hardware.h"
 #include "Serial.h"
 
@@ -65,7 +66,7 @@ public:
                 stopBlock.setSpeed(0);
                 _state = State::Stopped;
 
-                //serial.Transmit.WriteLine(stopMessage);
+                // serial.Transmit.WriteLine(stopMessage);
             }
         }
         else // running
