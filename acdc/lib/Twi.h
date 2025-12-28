@@ -2,6 +2,9 @@
 #include <stdint.h>
 
 #include "atl/Bit.h"
+#include "atl/Debug.h"
+#include "atl/SpinWait.h"
+#include "atl/StringUtils.h"
 #include "Port.h"
 #include "PowerReduction.h"
 
@@ -61,9 +64,12 @@ enum class TwiResult : uint8_t
 #define TWI_STATUS_DATA_TX_SLV_NACK 0xC0 // Data byte transmitted, NOT ACK received
 #define TWI_STATUS_DATA_TX_SLV_LAST 0xC8 // Last data byte transmitted, ACK received
 
+// NOTE: this static class wont hold up with MCUs that have multiple I2C interfaces.
 class Twi
 {
 public:
+    static const uint8_t DebugComponentId = 12;
+
     static TwiResult Open(I2cFrequency frequency, bool enablePullups = true)
     {
         return Open(((uint32_t)frequency) * 1000, enablePullups);
@@ -105,6 +111,11 @@ public:
     // Send START condition
     static TwiResult Start(uint8_t address, bool read)
     {
+        if (read)
+            Trace("Start (read)");
+        else
+            Trace("Start (write)");
+
         if (!IsValidAddress(address))
             return TwiResult::InvalidParameter;
 
@@ -131,6 +142,7 @@ public:
     // Send STOP condition
     static TwiResult Stop(uint32_t spinTimeout = 500)
     {
+        Trace("Stop");
         // Transmit STOP condition
         TWCR = (1 << TWINT) | (1 << TWEN) | (1 << TWSTO);
 
@@ -147,7 +159,9 @@ public:
     // Send data byte
     static TwiResult Write(uint8_t data)
     {
-        Send(data);
+        Trace("Write");
+        if (!Send(data))
+            return TwiResult::Timeout;
 
         // Check if data was acknowledged
         if ((TWSR & TWI_STATUS_MASK) != TWI_STATUS_DATA_TX_ACK)
@@ -159,6 +173,7 @@ public:
     // Read data byte with ACK (more bytes to follow)
     static bool TryReadAck(uint8_t *outData)
     {
+        Trace("TryReadAck");
         // Signal acknowledgment after reception
         TWCR = (1 << TWINT) | (1 << TWEN) | (1 << TWEA);
         if (!WaitForComplete())
@@ -172,6 +187,7 @@ public:
     // Read data byte with NACK (last byte)
     static bool TryReadNack(uint8_t *outData)
     {
+        Trace("TryReadNack");
         // Signal no acknowledgment after reception
         TWCR = (1 << TWINT) | (1 << TWEN);
         if (!WaitForComplete())
@@ -216,11 +232,11 @@ private:
         return WaitForComplete();
     }
 
-    static bool WaitForComplete(uint32_t spinTimeout = 500, uint16_t spinDelay = 0)
+    static bool WaitForComplete(uint32_t spinRetries = 50, uint16_t spinDelay = 10)
     {
         while (!(TWCR & (1 << TWINT)))
         {
-            if (spinTimeout-- == 0)
+            if (spinRetries-- == 0)
                 return false;
 
             SpinWait(spinDelay);
@@ -228,14 +244,24 @@ private:
         return true;
     }
 
-    static void SpinWait(uint16_t spinDelay)
+#ifdef DEBUG
+    static void Trace(const char *msg)
     {
-        while (spinDelay-- > 0)
-        {
-            __asm__ __volatile__("nop");
-        }
+        _debugBuffer.Clear();
+        _debugBuffer.Write("I2C:");
+        _debugBuffer.Write(msg);
+        LogTrace<DebugComponentId>(_debugBuffer);
     }
+
+    static StringWriter<100> _debugBuffer;
+#else
+    static void Trace(const char *msg) {}
+#endif //~DEBUG
 };
+
+#ifdef DEBUG
+StringWriter<100> Twi::_debugBuffer;
+#endif //~DEBUG
 
 template <class TwiT = Twi>
 class TwiTransmit : public TwiT
@@ -271,6 +297,26 @@ public:
         PromoteFailure(result);
         result = TwiT::Write(data & 0xFF);
         PromoteFailure(result);
+
+        result = TwiT::Stop();
+        PromoteFailure(result);
+
+        return TwiResult::Ok;
+    }
+
+    static TwiResult WriteRegisterMulti(uint8_t address, uint8_t reg, uint8_t *data, uint8_t count)
+    {
+        TwiResult result = TwiT::Start(address, false);
+        PromoteFailure(result);
+
+        result = TwiT::Write(reg);
+        PromoteFailure(result);
+
+        while (count-- > 0)
+        {
+            result = TwiT::Write(*(data++));
+            PromoteFailure(result);
+        }
 
         result = TwiT::Stop();
         PromoteFailure(result);
@@ -328,6 +374,31 @@ public:
             return TwiResult::Timeout;
 
         *outData |= data;
+
+        result = TwiT::Stop();
+        PromoteFailure(result);
+
+        return TwiResult::Ok;
+    }
+
+    static TwiResult TryReadRegisterMulti(uint8_t address, uint8_t reg, uint8_t *outData, uint8_t count)
+    {
+        TwiResult result = TwiT::Start(address, false);
+        PromoteFailure(result);
+
+        result = TwiT::Write(reg);
+        PromoteFailure(result);
+
+        result = TwiT::Start(address, true);
+        PromoteFailure(result);
+
+        uint8_t data = 0;
+        while (count-- > 0)
+        {
+            if (!TwiT::TryReadAck(&data))
+                return TwiResult::Timeout;
+            *(outData++) = data;
+        }
 
         result = TwiT::Stop();
         PromoteFailure(result);

@@ -127,11 +127,11 @@ public:
     }
 
     /** Clears the content of the collection.
-     *  It simply resets the count and does not call ArrayT::Clear()!
      */
     inline void Clear()
     {
         _count = 0;
+        _array.Clear();
     }
 
     /** Gets the pointer to the internal array buffer.
@@ -143,5 +143,5 @@ public:
 
 private:
     ArrayT _array;
-    int16_t _count;
+    uint16_t _count;
 };

@@ -82,7 +82,7 @@ private:
     // }
 };
 
-typedef Block<BlockController<MotorControllerT_0, Ina219T_0>> BlockControllerT_0;
-typedef Block<BlockController<MotorControllerT_1, Ina219T_1>> BlockControllerT_1;
-typedef Block<BlockController<MotorControllerT_2, Ina219T_2>> BlockControllerT_2;
-typedef Block<BlockController<MotorControllerT_3, Ina219T_3>> BlockControllerT_3;
+// typedef Block<BlockController<MotorControllerT_0, Ina219T_0>> BlockControllerT_0;
+// typedef Block<BlockController<MotorControllerT_1, Ina219T_1>> BlockControllerT_1;
+// typedef Block<BlockController<MotorControllerT_2, Ina219T_2>> BlockControllerT_2;
+// typedef Block<BlockController<MotorControllerT_3, Ina219T_3>> BlockControllerT_3;

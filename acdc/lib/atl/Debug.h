@@ -1,19 +1,6 @@
 #pragma once
 #include <stdint.h>
 
-/** Intended to give an indication on the ComponentId value ranges.
- *  All ComponentIds 0x00-0x7F are reserved. Start your custom ComponentIds
- *  at 0x80-0xFF.
- */
-enum class AtlComponentIds : uint8_t
-{
-    AtlAnonymous = 0x00,
-    AtlReservedStart = 0x01,
-    AtlReservedEnd = 0x7F,
-    AtlUserStart = 0x80,
-    AtlUserEnd = 0xFF,
-};
-
 /** Indicates the debug logging level.
  *  Do not use Off.
  */
@@ -35,6 +22,8 @@ enum class DebugLevel : uint8_t
     Debug,
 };
 
+const uint8_t DebugAnonymousComponentId = 0x00;
+
 #ifdef DEBUG
 
 // Implement this method in your own code and route the message to the desired output.
@@ -47,7 +36,7 @@ bool AtlDebugFilter(const uint8_t componentId, DebugLevel debugLevel) __attribut
  *  The Debug class is a static class and cannot be instantiated.
  *  \tparam ComponentId is used as a source id for filtering debug log writes.
  */
-template <const uint8_t ComponentId = (uint8_t)AtlComponentIds::AtlAnonymous>
+template <const uint8_t ComponentId = DebugAnonymousComponentId>
 class Debug
 {
 public:
@@ -92,7 +81,7 @@ private:
  *  The Debug class is a static class and cannot be instantiated.
  *  \tparam ComponentId is unused.
  */
-template <const uint8_t ComponentId = (uint8_t)AtlComponentIds::AtlAnonymous>
+template <const uint8_t ComponentId = DebugAnonymousComponentId>
 class Debug
 {
 public:
@@ -120,28 +109,58 @@ void LogCritical(const char *message)
 {
     Debug<>::Log<DebugLevel::Critical>(message);
 }
+template <const uint8_t ComponentId>
+void LogCritical(const char *message)
+{
+    Debug<ComponentId>::Log<DebugLevel::Critical>(message);
+}
 
 void LogError(const char *message)
 {
     Debug<>::Log<DebugLevel::Error>(message);
+}
+template <const uint8_t ComponentId>
+void LogError(const char *message)
+{
+    Debug<ComponentId>::Log<DebugLevel::Error>(message);
 }
 
 void LogWarning(const char *message)
 {
     Debug<>::Log<DebugLevel::Warning>(message);
 }
+template <const uint8_t ComponentId>
+void LogWarning(const char *message)
+{
+    Debug<ComponentId>::Log<DebugLevel::Warning>(message);
+}
 
 void LogInfo(const char *message)
 {
     Debug<>::Log<DebugLevel::Info>(message);
+}
+template <const uint8_t ComponentId>
+void LogInfo(const char *message)
+{
+    Debug<ComponentId>::Log<DebugLevel::Info>(message);
 }
 
 void LogTrace(const char *message)
 {
     Debug<>::Log<DebugLevel::Trace>(message);
 }
+template <const uint8_t ComponentId>
+void LogTrace(const char *message)
+{
+    Debug<ComponentId>::Log<DebugLevel::Trace>(message);
+}
 
 void LogDebug(const char *message)
 {
     Debug<>::Log<DebugLevel::Debug>(message);
+}
+template <const uint8_t ComponentId>
+void LogDebug(const char *message)
+{
+    Debug<ComponentId>::Log<DebugLevel::Debug>(message);
 }

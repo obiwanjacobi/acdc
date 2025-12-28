@@ -205,7 +205,6 @@ public:
         WriteLine();
     }
 
-private:
     void WriteInt(uint16_t integer, uint8_t base, const uint8_t fixedLength = 0)
     {
         // an int is 2^32 and has 10 digits + terminating 0
@@ -218,6 +217,7 @@ private:
         WriteInternal<uint32_t, 21>(integer, base, fixedLength);
     }
 
+private:
     template <typename T, const uint8_t bufferSize>
     void WriteInternal(T integer, uint8_t base, const uint8_t fixedLength)
     {
