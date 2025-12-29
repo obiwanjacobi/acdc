@@ -102,6 +102,11 @@ public class Parser
         // DeviceId = 0
         // Msg = 0x41 => Node-BlockSpeed
         // 0xFF = End of Message
-        buffer.AddRange([1, 0, 0x41, blockId, speed, 0xFF]);
+        buffer.AddRange([1, 0, 0x41, blockId, ScaleSpeed(speed), 0xFF]);
+    }
+
+    private static byte ScaleSpeed(byte value)
+    {
+        return (byte)((value * 254) / 9);
     }
 }

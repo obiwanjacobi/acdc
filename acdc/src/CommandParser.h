@@ -65,7 +65,7 @@ public:
             _state = ParserState::Command_Device;
             // serial.Transmit.Write("D:");
             // serial.Transmit.WriteLine(data);
-            break;
+            return true;
         case ParserState::Command_Device:
             if (data == Command::EOM)
             {
@@ -78,7 +78,7 @@ public:
             _state = ParserState::Command_Message;
             // serial.Transmit.Write("M:");
             // serial.Transmit.WriteLine(data);
-            break;
+            return true;
         case ParserState::Command_Message:
             if (data == Command::EOM)
             {

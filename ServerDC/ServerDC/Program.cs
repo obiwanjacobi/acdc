@@ -41,7 +41,7 @@ while (true)
     {
         var k = Console.ReadKey().KeyChar;
         parser.Parse(k);
-        if (k == '\r') Console.WriteLine(".");
+        //if (k == '\r') Console.WriteLine(".");
     }
     if (parser.IsComplete)
     {
@@ -65,13 +65,11 @@ while (true)
                 {
                     if (msg[i] == 0xFF)
                     {
-                        Console.WriteLine();
+                        Console.WriteLine("0xFF");
                         continue;
                     }
-                    else if (i > 0)
-                        Console.Write(",");
 
-                    Console.Write(msg[i]);
+                    Console.Write($"0x{msg[i]:X2},");
                 }
 
                 Console.WriteLine();

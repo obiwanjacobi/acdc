@@ -25,10 +25,10 @@
 
 #include "Serial.h"
 #include "PwmTask.h"
-// #include "CommandParser.h"
-// #include "CommandHandler.h"
-#include "SimpleCommandParser.h"
-#include "SimpleCommandHandler.h"
+#include "CommandParser.h"
+#include "CommandHandler.h"
+// #include "SimpleCommandParser.h"
+// #include "SimpleCommandHandler.h"
 #include "BlockDriverTask.h"
 #include "hardware.h"
 
@@ -43,8 +43,8 @@ TimeoutTask<ToggleOutputPinTaskBase<PortPins::B5>, Scheduler, ToMilliseconds(Tim
 // Servo360OutputPin<ServoTimer1, PortPins::B1> pwmServo1Pin(&servoTimer);
 // Servo360OutputPin<ServoTimer1, PortPins::B2> pwmServo2Pin(&servoTimer);
 
-// CommandParser<CommandHandler> commandParser;
-SimpleCommandParser<SimpleCommandHandler> commandParser;
+CommandParser<CommandHandler> commandParser;
+// SimpleCommandParser<SimpleCommandHandler> commandParser;
 
 BlockControllerTask<Scheduler> blockControllerTask;
 
@@ -60,6 +60,8 @@ public:
 
         // indication that the program is running
         blinkLedTask.Run();
+
+        // blockControllerTask.Run(blockController0, blockController1, blockController2, blockController3);
 
         ReadSerial();
         ReadSensors();
@@ -107,10 +109,12 @@ public:
         }
         else if (commandParser.IsComplete())
         {
-            if (commandParser.Dispatch())
-                serial.Transmit.WriteLine("ok");
-            else
-                serial.Transmit.WriteLine("err");
+            // if (commandParser.Dispatch())
+            //      serial.Transmit.WriteLine("ok");
+            //  else
+            //      serial.Transmit.WriteLine("err");
+            if (!commandParser.Dispatch())
+                serial.Transmit.WriteLine("?");
             commandParser.Clear();
         }
 
@@ -119,24 +123,25 @@ public:
 
     void ReadSensors()
     {
-        uint8_t blockFlags = 0;
-        if (commandParser.TryReadBlocks(&blockFlags))
-        {
-            serial.Transmit.WriteLine(blockFlags);
-        }
-
-        // BlockOccupationEvent *blockEvent = nullptr;
-        // if (commandParser.TryCreateBlockOccupationEvent(&blockEvent))
+        // uint8_t blockFlags = 0;
+        // if (commandParser.TryReadBlocks(&blockFlags))
         // {
-        // FixedArray<uint8_t, 10> array;
-        // CommandBuffer buffer(array.getBuffer(), array.getCapacity());
-        // uint8_t l = blockEvent->Serialize(buffer);
-        // // shrink buffer to what has actually being written
-        // CommandBuffer data(buffer, l);
-        // serial.Transmit.WriteBuffer(data);
+        //     serial.Transmit.WriteLine(blockFlags);
+        // }
 
-        // uint8_t flags = blockEvent->OccupationFlags;
-        // serial.Transmit.WriteLine(flags);
+        BlockOccupationEvent *blockEvent = nullptr;
+        if (commandParser.TryCreateBlockOccupationEvent(&blockEvent))
+        {
+            FixedArray<uint8_t, 10> array;
+            CommandBuffer buffer(array.getBuffer(), array.getCapacity());
+            uint8_t l = blockEvent->Serialize(buffer);
+            // shrink buffer to what has actually being written
+            CommandBuffer data(buffer, l);
+            serial.Transmit.WriteBuffer(data);
+
+            // uint8_t flags = blockEvent->OccupationFlags;
+            // serial.Transmit.WriteLine(flags);
+        }
     }
 
     void Initialize()

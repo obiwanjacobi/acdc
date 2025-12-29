@@ -44,7 +44,7 @@ public:
         if (_state == State::Conflict)
         {
             // could be the train transitioning from stopBlock to prioBlok, so wait a bit
-            Task_WaitUntil(SchedulerT::Wait((uint16_t)stopMessage, SchedulerT::TimeForMilliseconds(200)));
+            Task_WaitUntil(SchedulerT::Delay((uint16_t)stopMessage, SchedulerT::ForMilliseconds(200)));
         }
 
         if (_state == State::Stopped)
@@ -103,7 +103,7 @@ public:
     BlockControllerTask()
     {
         _detected = false;
-        _speed = 100;
+        _speed = 160;
     }
 
     Task_BeginParams(Run, BlockControllerT_0 &block0, BlockControllerT_1 &block1, BlockControllerT_2 &block2, BlockControllerT_3 &block3)
