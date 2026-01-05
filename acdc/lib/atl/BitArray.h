@@ -19,7 +19,7 @@ public:
     {
     }
 
-    /** Sets all bits in one call.
+    /** Gets all bits in one call.
      *  \return Returns all the bits as T.
      */
     inline T GetAll() const

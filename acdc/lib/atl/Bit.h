@@ -119,7 +119,7 @@ public:
     template <typename T>
     static void Set(T &target, const uint8_t bitIndex)
     {
-        if (bitIndex > getMaxBits<T>())
+        if (bitIndex >= getMaxBits<T>())
             return;
 
         target |= getMask<T>(bitIndex);
@@ -134,7 +134,7 @@ public:
     template <typename T>
     static void Set(T &target, const uint8_t bitIndex, bool value)
     {
-        if (bitIndex > getMaxBits<T>())
+        if (bitIndex >= getMaxBits<T>())
             return;
 
         T mask = getMask<T>(bitIndex);
@@ -159,7 +159,7 @@ public:
     template <typename T>
     static void Reset(T &target, const uint8_t bitIndex)
     {
-        if (bitIndex > getMaxBits<T>())
+        if (bitIndex >= getMaxBits<T>())
             return;
 
         // clear bit
@@ -174,7 +174,7 @@ public:
     template <typename T>
     static void Toggle(T &target, const uint8_t bitIndex)
     {
-        if (bitIndex > getMaxBits<T>())
+        if (bitIndex >= getMaxBits<T>())
             return;
 
         target ^= getMask<T>(bitIndex);
@@ -189,7 +189,7 @@ public:
     template <typename T>
     static bool IsTrue(T target, const uint8_t bitIndex)
     {
-        if (bitIndex > getMaxBits<T>())
+        if (bitIndex >= getMaxBits<T>())
             return false;
 
         return (target & getMask<T>(bitIndex)) > 0;
@@ -204,7 +204,7 @@ public:
     template <typename T>
     static bool IsFalse(T target, const uint8_t bitIndex)
     {
-        if (bitIndex > getMaxBits<T>())
+        if (bitIndex >= getMaxBits<T>())
             return false;
 
         return (target & getMask<T>(bitIndex)) == 0;

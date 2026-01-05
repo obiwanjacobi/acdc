@@ -118,6 +118,11 @@ public:
         // TODO: quicker way?
     }
 
+    bool getCanWrite() const
+    {
+        return getEnable() && getAcceptData();
+    }
+
     /** Blocks until the transmitter accepts data and write data to the data register.
      *  \return Always returns `Success`.
      */

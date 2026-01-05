@@ -9,7 +9,8 @@ typedef Slice<uint8_t> CommandBuffer;
 enum class GlobalMessages : uint8_t
 {
     None = 0x00,
-    Reset = 0x01, // resets all nodes on the network
+    Reset = 0x01, // sent by PC to resets all nodes on the network.
+    Ping = 0x02,  // sent by PC to check connection to nodes. Node may shutdown if not received. (interval?)
 
     Invalid = 0xFF
 };
@@ -17,7 +18,8 @@ enum class GlobalMessages : uint8_t
 enum class NodeMessages : uint8_t
 {
     None = 0x00,
-    Reset = 0x01, // resets the node and all its devices
+    Reset = 0x01,     // resets the node and all its devices
+    Heartbeat = 0x02, // sent by node to let it know it is still alive. (interval?)
 
     BlockPower = 0x40,      // turns power on/off for a specified block
     BlockSpeed = 0x41,      // sets speed for a specified block

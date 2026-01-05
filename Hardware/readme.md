@@ -8,6 +8,25 @@ Controller board for managing a block of the the layout.
 
 ## Experiments
 
+### Block Occupancy Detection
+
+Using a rectifier bridge inline with the track/block supply and an opto-coupler to isolate 12V rail from the 5V rail.
+
+The rectifier bridge's `+` and `-` are shorted together and one side of the track/block supply goes through the `~` of the bridge-rectifier.
+
+The input (LED) of the opto-coupler receives the voltage drop over the `~` of the bridge-rectifier (+ current limiting R). Use a bidirectional optocoupler - one that has two anti-parallel LEDs.
+
+```
+             o--------------------o
+                       +             Track/Block
+Track Supply        ~ /|\ ~
+             o---+---  | ---+-----o
+                 |    \|/   |
+                 |     -    |    ________
+                 |          +----|*     |--- Collector (pullup R to 5V)
+                 +--[R??]--------|______|----Emitter   (GND)
+```
+
 ### 38kHz IR optical gate detector
 
 The Aliexpress IR optical sensors that work based on reflecting the light are suseptable to ambient light inteference.

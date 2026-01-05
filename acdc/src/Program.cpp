@@ -25,10 +25,10 @@
 
 #include "Serial.h"
 #include "PwmTask.h"
-#include "CommandParser.h"
-#include "CommandHandler.h"
-// #include "SimpleCommandParser.h"
-// #include "SimpleCommandHandler.h"
+// #include "CommandParser.h"
+// #include "CommandHandler.h"
+#include "SimpleCommandParser.h"
+#include "SimpleCommandHandler.h"
 #include "BlockDriverTask.h"
 #include "hardware.h"
 
@@ -43,8 +43,8 @@ TimeoutTask<ToggleOutputPinTaskBase<PortPins::B5>, Scheduler, ToMilliseconds(Tim
 // Servo360OutputPin<ServoTimer1, PortPins::B1> pwmServo1Pin(&servoTimer);
 // Servo360OutputPin<ServoTimer1, PortPins::B2> pwmServo2Pin(&servoTimer);
 
-CommandParser<CommandHandler> commandParser;
-// SimpleCommandParser<SimpleCommandHandler> commandParser;
+// CommandParser<CommandHandler> commandParser;
+SimpleCommandParser<SimpleCommandHandler> commandParser;
 
 BlockControllerTask<Scheduler> blockControllerTask;
 
@@ -123,25 +123,25 @@ public:
 
     void ReadSensors()
     {
-        // uint8_t blockFlags = 0;
-        // if (commandParser.TryReadBlocks(&blockFlags))
-        // {
-        //     serial.Transmit.WriteLine(blockFlags);
-        // }
-
-        BlockOccupationEvent *blockEvent = nullptr;
-        if (commandParser.TryCreateBlockOccupationEvent(&blockEvent))
+        uint8_t blockFlags = 0;
+        if (commandParser.TryReadBlocks(&blockFlags))
         {
-            FixedArray<uint8_t, 10> array;
-            CommandBuffer buffer(array.getBuffer(), array.getCapacity());
-            uint8_t l = blockEvent->Serialize(buffer);
-            // shrink buffer to what has actually being written
-            CommandBuffer data(buffer, l);
-            serial.Transmit.WriteBuffer(data);
-
-            // uint8_t flags = blockEvent->OccupationFlags;
-            // serial.Transmit.WriteLine(flags);
+            serial.Transmit.WriteLine(blockFlags);
         }
+
+        // BlockOccupationEvent *blockEvent = nullptr;
+        // if (commandParser.TryCreateBlockOccupationEvent(&blockEvent))
+        // {
+        //     FixedArray<uint8_t, 10> array;
+        //     CommandBuffer buffer(array.getBuffer(), array.getCapacity());
+        //     uint8_t l = blockEvent->Serialize(buffer);
+        //     // shrink buffer to what has actually being written
+        //     CommandBuffer data(buffer, l);
+        //     serial.Transmit.WriteBuffer(data);
+
+        //     // uint8_t flags = blockEvent->OccupationFlags;
+        //     // serial.Transmit.WriteLine(flags);
+        // }
     }
 
     void Initialize()

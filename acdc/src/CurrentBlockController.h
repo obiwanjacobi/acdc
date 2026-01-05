@@ -30,17 +30,18 @@ public:
 
     bool IsOccupied(uint16_t threshold = 200, uint16_t delta = 100)
     {
-        // int16_t bus = 0;
+        int16_t bus = 0;
         int16_t shunt = 0;
         // Direction dir = MotorControllerT::getDirection();
-        if ( // CurrentSensorT::TryReadBusVoltage(&bus) &&
+        if (CurrentSensorT::TryReadBusVoltage(&bus) &&
             CurrentSensorT::TryReadShuntVoltage(&shunt))
         {
             int16_t shuntDelta = shunt - _lastShuntV;
 
-            if ( // bus > threshold &&
-                 //  ((dir == Direction::Forward && shunt < 0) ||
-                 //   (dir == Direction::Backward && shunt > 0)) &&
+            if (bus > threshold &&
+                // Math::Abs(shunt) > threshold &&
+                //   ((dir == Direction::Forward && shunt < 0) ||
+                //    (dir == Direction::Backward && shunt > 0)) &&
                 Math::Abs(shuntDelta) > (int16_t)delta)
             {
                 _lastShuntV = shunt;
@@ -51,14 +52,16 @@ public:
                 serial.Transmit.Write(" ");
                 serial.Transmit.Write(_lastShuntV);
 
-                // serial.Transmit.Write(" (");
-                // serial.Transmit.Write(bus);
-                // serial.Transmit.Write(") ");
-                // serial.Transmit.Write(shuntDelta);
+                serial.Transmit.Write(" (");
+                serial.Transmit.Write(bus);
+                serial.Transmit.Write(") ");
+                serial.Transmit.Write(shuntDelta);
 
                 serial.Transmit.WriteLine();
             }
         }
+        else
+            serial.Transmit.Write(".");
 
         return Math::Abs(_lastShuntV) > (int16_t)threshold;
     }

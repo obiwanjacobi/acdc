@@ -36,7 +36,6 @@ const UsartIds usartId = UsartIds::Usart0;
 const uint8_t CharacterBufferSize = 21;
 
 typedef TextWriter<DataWriter<UsartOutputStream<UsartTransmit<usartId>, RingBuffer<uint8_t, CharacterBufferSize>>>> SerialWriter;
-// typedef DataWriter<UsartOutputStream<UsartTransmit<usartId>, RingBuffer<uint8_t, CharacterBufferSize>>> SerialWriter;
 typedef UsartInputStream<UsartReceive<usartId>, RingBuffer<uint8_t, CharacterBufferSize>> SerialReader;
 
 class Serial : public Usart<usartId, SerialWriter, SerialReader>

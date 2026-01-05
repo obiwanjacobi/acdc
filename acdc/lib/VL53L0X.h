@@ -144,11 +144,11 @@ class VL53L0X
     };
 
 public:
-    static const uint8_t DefaultI2cAddress = 0x29;
+    static const uint8_t DefaultAddress = 0x29;
     static const uint8_t DebugComponentId = 53;
 
     VL53L0X()
-        : _stopVariable(0), _measurementTimingBudget_us(0), _shutdownPin(false), _address(DefaultI2cAddress)
+        : _stopVariable(0), _measurementTimingBudget_us(0), _shutdownPin(false), _address(DefaultAddress)
     {
     }
 

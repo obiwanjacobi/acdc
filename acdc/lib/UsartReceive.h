@@ -68,6 +68,13 @@ public:
         return Bit<RXC0>::IsTrue(UsartRegisters<UsartId>::getUCSRA());
     }
 
+    /** Indicates if data is available to read.
+     */
+    bool getCanRead() const
+    {
+        return getEnable() && getIsComplete();
+    }
+
     /** Blocks code execution until the receive operation is complete.
      *  See also `getIsComplete()`.
      */

@@ -40,6 +40,11 @@ public:
         BaseT::Flush();
     }
 
+    bool getCanWrite() const
+    {
+        return getCount() < getBufferSize();
+    }
+
     /** Writes one byte to the stream.
      *  \param data the byte that is written to the output stream.
      */
@@ -47,7 +52,7 @@ public:
     {
         // keep retrying till the buffer has space
         while (!_buffer.Write(data))
-            ;
+            SpinWait(1);
     }
 
     /** Call this method from the `ISR(USARTn_UDRE_vect)` interrupt handler.
@@ -55,7 +60,7 @@ public:
      */
     void OnAcceptDataInterrupt()
     {
-        if (_buffer.getCount())
+        if (_buffer.getCount() > 0)
         {
             // write the next byte from buffer
             BaseT::WriteInternal(_buffer.Read());

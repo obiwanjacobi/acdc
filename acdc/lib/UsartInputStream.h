@@ -41,6 +41,11 @@ public:
         _buffer.Clear();
     }
 
+    bool getCanRead() const
+    {
+        return !getIsEmpty() || BaseT::getCanRead();
+    }
+
     /** Reads one byte from the stream.
      *  It turns on the receive interrupt when no data is available (first read is always -1).
      *  \return Returns the byte read in the lsb (up to 9 bits).
