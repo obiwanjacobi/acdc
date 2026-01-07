@@ -653,6 +653,9 @@ private:
         return (result == TwiResult::Ok);
     }
 
+    // TODO: move this into Twi.h
+    // This TryReadRegister16 reads last byte as NACK instead of ACK.
+
 #define _PromoteFailure(result)  \
     if (I2cT::HasFailed(result)) \
     {                            \

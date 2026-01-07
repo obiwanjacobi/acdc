@@ -207,6 +207,10 @@ public:
     {
         return result != TwiResult::Ok;
     }
+    static bool HasSucceeded(TwiResult result)
+    {
+        return result == TwiResult::Ok;
+    }
 
     static void Abort()
     {
@@ -267,6 +271,20 @@ template <class TwiT = Twi>
 class TwiTransmit : public TwiT
 {
 public:
+    static TwiResult WriteDirect8(uint8_t address, uint8_t data)
+    {
+        TwiResult result = TwiT::Start(address, false);
+        PromoteFailure(result);
+
+        result = TwiT::Write(data);
+        PromoteFailure(result);
+
+        result = TwiT::Stop();
+        PromoteFailure(result);
+
+        return TwiResult::Ok;
+    }
+
     static TwiResult WriteRegister8(uint8_t address, uint8_t reg, uint8_t data)
     {
         TwiResult result = TwiT::Start(address, false);
@@ -333,6 +351,23 @@ class TwiReceive : public TwiT
 {
 
 public:
+    static TwiResult TryReadDirect8(uint8_t address, uint8_t *outData)
+    {
+        TwiResult result = TwiT::Start(address, false);
+        PromoteFailure(result);
+
+        result = TwiT::Start(address, true);
+        PromoteFailure(result);
+
+        if (!TwiT::TryReadNack(outData))
+            return TwiResult::Timeout;
+
+        result = TwiT::Stop();
+        PromoteFailure(result);
+
+        return TwiResult::Ok;
+    }
+
     static TwiResult TryReadRegister8(uint8_t address, uint8_t reg, uint8_t *outData)
     {
         TwiResult result = TwiT::Start(address, false);
