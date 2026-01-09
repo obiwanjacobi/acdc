@@ -38,7 +38,7 @@ public:
         {
             int16_t shuntDelta = shunt - _lastShuntV;
 
-            if (bus > threshold &&
+            if (bus > (int16_t)threshold &&
                 // Math::Abs(shunt) > threshold &&
                 //   ((dir == Direction::Forward && shunt < 0) ||
                 //    (dir == Direction::Backward && shunt > 0)) &&

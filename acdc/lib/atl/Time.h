@@ -1,8 +1,11 @@
 #pragma once
 #include <stdint.h>
+#include <math.h>
+#include <util/delay.h>
 #include "TimeResolution.h"
-#include "../TimerCounter.h"
 
+// DEPENDENCIES!!
+#include "../TimerCounter.h"
 typedef TimerCounter0 TimerCounterT;
 
 ISR(TIMER0_OVF_vect)
@@ -65,6 +68,7 @@ public:
         return ResolutionId;
     }
 
+    static void Wait(uint32_t delay);
     // blocks caller until delay has elapsed
     // delay in TimeResolution
     static void SpinWait(uint32_t delay);
@@ -113,4 +117,16 @@ void Time<TimeResolution::Microseconds>::SpinWait(uint32_t delay)
     uint32_t start = TimerCounterT::getMicroseconds();
     while (TimerCounterT::getMicroseconds() - start < delay)
         ;
+}
+
+template <>
+void Time<TimeResolution::Milliseconds>::Wait(uint32_t delay)
+{
+    _delay_ms(delay);
+}
+
+template <>
+void Time<TimeResolution::Microseconds>::Wait(uint32_t delay)
+{
+    _delay_us(delay);
 }

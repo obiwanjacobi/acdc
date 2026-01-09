@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include "../lib/atl/Debug.h"
-#include "../lib/atl/Math.h"
+#include "../lib/atl/AtlMath.h"
 #include <BitArray.h>
 
 #include "Block.h"

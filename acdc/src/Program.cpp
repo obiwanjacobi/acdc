@@ -1,4 +1,4 @@
-// #define DEBUG
+#define DEBUG
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
@@ -23,6 +23,8 @@
 #include "../lib/atl/ToggleOutputPinTaskBase.h"
 #include <ReadWithState.h>
 
+#include "hardware.h"
+#include "HD44780.h"
 #include "Serial.h"
 #include "PwmTask.h"
 // #include "CommandParser.h"
@@ -30,7 +32,6 @@
 #include "SimpleCommandParser.h"
 #include "SimpleCommandHandler.h"
 #include "BlockDriverTask.h"
-#include "hardware.h"
 
 const uint8_t MaxItems = 5;
 #define TimeRes TimeResolution::Milliseconds
@@ -51,6 +52,9 @@ BlockControllerTask<Scheduler> blockControllerTask;
 // VL53L0XT_0 sensor0;
 // VL53L0XT_1 sensor1;
 
+BitArray<uint8_t> lcdData(1 << LED_Index);
+LCD lcd;
+
 class Program
 {
 public:
@@ -63,8 +67,8 @@ public:
 
         // blockControllerTask.Run(blockController0, blockController1, blockController2, blockController3);
 
-        ReadSerial();
-        ReadSensors();
+        // ReadSerial();
+        // ReadSensors();
 
         // if (sensor0.isMeasurementReady() && sensor1.isMeasurementReady())
         // {
@@ -81,7 +85,7 @@ public:
         // }
 
         // tredding water
-        Scheduler::SpinWait(Scheduler::ForMilliseconds(20));
+        Scheduler::SpinWait(50);
     }
 
     void ReadSerial()
@@ -159,15 +163,15 @@ public:
         // enable global interrupts
         Interupts::Enable();
 
-        if (Twi::Open(I2cFrequency::Fast) != TwiResult::Ok)
+        if (Twi::HasFailed(Twi::Open(I2cFrequency::Normal)))
             Stop(2);
 
-        if (!PwmModuleT::Open(70) ||
-            !PwmModuleT::setOutputMode(PwmModuleT::OutputDriver::PushPull))
-            Stop(3);
+        // if (!PwmModuleT::Open(70) ||
+        //     !PwmModuleT::setOutputMode(PwmModuleT::OutputDriver::PushPull))
+        //     Stop(3);
 
-        if (!commandParser.Open())
-            Stop(4);
+        // if (!commandParser.Open())
+        //     Stop(4);
 
         // if (!sensor0.Open())
         //     Stop(5);
@@ -176,6 +180,11 @@ public:
         // if (!sensor1.Open())
         //     Stop(6);
         // sensor1.StartContinuous();
+
+        lcd.setDataRegister(&lcdData);
+        lcd.Initialize();
+        lcd.setEnableDisplay();
+        lcd.Write("Hello World");
     }
 
     void Stop(uint8_t code)
@@ -269,7 +278,11 @@ bool AtlDebugFilter(uint8_t componentId, DebugLevel level)
     // if (componentId == 1)
     //     return false;
 
-    if (componentId == Twi::TwiDebugComponentId)
+    if (componentId == Twi::DebugComponentId)
+        return false;
+
+    // HD44780 LCD display
+    if (componentId == 20 || componentId == 21 || componentId == 22)
         return false;
 
     return true;

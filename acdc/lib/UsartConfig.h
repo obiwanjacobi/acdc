@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <avr/io.h>
 #include "atl/Bit.h"
-#include "atl/Math.h"
+#include "atl/AtlMath.h"
 
 #ifndef F_CPU
 #error "#define F_CPU with the clock speed of the MCU. For instance 160000000L for 16MHz."

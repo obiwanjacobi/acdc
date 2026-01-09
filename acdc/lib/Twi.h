@@ -251,21 +251,12 @@ private:
 #ifdef DEBUG
     static void Trace(const char *msg)
     {
-        _debugBuffer.Clear();
-        _debugBuffer.Write("I2C:");
-        _debugBuffer.Write(msg);
-        LogTrace<DebugComponentId>(_debugBuffer);
+        LogTrace<DebugComponentId>(msg);
     }
-
-    static StringWriter<100> _debugBuffer;
 #else
     static void Trace(const char *msg) {}
 #endif //~DEBUG
 };
-
-#ifdef DEBUG
-StringWriter<100> Twi::_debugBuffer;
-#endif //~DEBUG
 
 template <class TwiT = Twi>
 class TwiTransmit : public TwiT

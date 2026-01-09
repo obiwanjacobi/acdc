@@ -41,34 +41,34 @@ class Debug
 {
 public:
     /** Logs the message to the debug target.
-     *  \tparam debugLevel indicates for which level the message is intended.
+     *  \tparam DebugLevel indicates for which level the message is intended.
      *  Do not use `DebugLevel::Off`.
      *  \param message is the message text to write.
      */
-    template <const DebugLevel debugLevel>
+    template <const DebugLevel DebugLevel>
     static void Log(const char *message)
     {
-        static_assert(debugLevel != DebugLevel::Off, "Debug::Log: Do not use DebugLevel::Off.");
+        static_assert(DebugLevel != DebugLevel::Off, "Debug::Log: Do not use DebugLevel::Off.");
 
-        if (CanLog<debugLevel>())
-            AtlDebugWrite(ComponentId, debugLevel, message);
+        if (CanLog<DebugLevel>())
+            AtlDebugWrite(ComponentId, DebugLevel, message);
     }
 
     /** Indicates if a message to the debug target for the specified ComponentId and debugLevel.
-     *  \tparam debugLevel indicates for which level the message is intended.
+     *  \tparam DebugLevel indicates for which level the message is intended.
      *  Do not use `DebugLevel::Off`.
      *  \return Returns true if logging is enabled.
      */
-    template <const DebugLevel debugLevel>
+    template <const DebugLevel DebugLevel>
     static bool CanLog()
     {
-        static_assert(debugLevel != DebugLevel::Off, "Debug::CanLog: Do not use DebugLevel::Off.");
+        static_assert(DebugLevel != DebugLevel::Off, "Debug::CanLog: Do not use DebugLevel::Off.");
 
         if (AtlDebugWrite == nullptr)
             return false;
         if (AtlDebugFilter == nullptr)
             return true;
-        return AtlDebugFilter(ComponentId, debugLevel);
+        return AtlDebugFilter(ComponentId, DebugLevel);
     }
 
 private:
@@ -86,17 +86,17 @@ class Debug
 {
 public:
     /** Does nothing.
-     *  \tparam debugLevel is not used.
+     *  \tparam DebugLevel is not used.
      *  \param message is not used.
      */
-    template <const DebugLevel debugLevel>
+    template <const DebugLevel DebugLevel>
     static void Log(const char * /*message*/) {}
 
     /** Always returns false.
-     *  \tparam debugLevel is not used.
+     *  \tparam DebugLevel is not used.
      *  \return Returns false.
      */
-    template <const DebugLevel debugLevel>
+    template <const DebugLevel DebugLevel>
     static bool CanLog() { return false; }
 
 private:
@@ -112,7 +112,7 @@ void LogCritical(const char *message)
 template <const uint8_t ComponentId>
 void LogCritical(const char *message)
 {
-    Debug<ComponentId>::Log<DebugLevel::Critical>(message);
+    Debug<ComponentId>::template Log<DebugLevel::Critical>(message);
 }
 
 void LogError(const char *message)
@@ -122,7 +122,7 @@ void LogError(const char *message)
 template <const uint8_t ComponentId>
 void LogError(const char *message)
 {
-    Debug<ComponentId>::Log<DebugLevel::Error>(message);
+    Debug<ComponentId>::template Log<DebugLevel::Error>(message);
 }
 
 void LogWarning(const char *message)
@@ -132,7 +132,7 @@ void LogWarning(const char *message)
 template <const uint8_t ComponentId>
 void LogWarning(const char *message)
 {
-    Debug<ComponentId>::Log<DebugLevel::Warning>(message);
+    Debug<ComponentId>::template Log<DebugLevel::Warning>(message);
 }
 
 void LogInfo(const char *message)
@@ -142,7 +142,7 @@ void LogInfo(const char *message)
 template <const uint8_t ComponentId>
 void LogInfo(const char *message)
 {
-    Debug<ComponentId>::Log<DebugLevel::Info>(message);
+    Debug<ComponentId>::template Log<DebugLevel::Info>(message);
 }
 
 void LogTrace(const char *message)
@@ -152,7 +152,7 @@ void LogTrace(const char *message)
 template <const uint8_t ComponentId>
 void LogTrace(const char *message)
 {
-    Debug<ComponentId>::Log<DebugLevel::Trace>(message);
+    Debug<ComponentId>::template Log<DebugLevel::Trace>(message);
 }
 
 void LogDebug(const char *message)
@@ -162,5 +162,5 @@ void LogDebug(const char *message)
 template <const uint8_t ComponentId>
 void LogDebug(const char *message)
 {
-    Debug<ComponentId>::Log<DebugLevel::Debug>(message);
+    Debug<ComponentId>::template Log<DebugLevel::Debug>(message);
 }

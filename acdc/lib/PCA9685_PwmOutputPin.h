@@ -1,5 +1,5 @@
 #pragma once
-#include "../lib/atl/Math.h"
+#include "../lib/atl/AtlMath.h"
 #include "Port.h"
 #include "PCA9685.h"
 
