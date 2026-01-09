@@ -9,7 +9,7 @@ class ToggleOutputPinTaskBase : public IdentifiableObject<DigitalOutputPin<PortP
 
 protected:
     // called by the TimeoutTask
-    inline void OnTimeout()
+    void OnTimeout()
     {
         BaseT::Toggle();
     }

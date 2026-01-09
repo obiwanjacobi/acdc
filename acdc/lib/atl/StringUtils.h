@@ -10,7 +10,7 @@ class StringStream : public BaseT
 {
 public:
     // stream interface
-    inline void Write(char character)
+    void Write(char character)
     {
         // array interface
         BaseT::Add(character);

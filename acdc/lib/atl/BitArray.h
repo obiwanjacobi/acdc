@@ -22,7 +22,7 @@ public:
     /** Gets all bits in one call.
      *  \return Returns all the bits as T.
      */
-    inline T GetAll() const
+    T GetAll() const
     {
         return _bits;
     }
@@ -30,7 +30,7 @@ public:
     /** Sets all bits in one call.
      *  \param bitValues is a bit pattern for all bits.
      */
-    inline void SetAll(T bitValues)
+    void SetAll(T bitValues)
     {
         _bits = bitValues;
     }
@@ -118,7 +118,7 @@ public:
      *  \param bitIndex is the zero-based index where the bit value is retrieved.
      *  \return Returns the bit value or false if the bitIndex is invalid.
      */
-    inline bool Get(uint8_t bitIndex) const
+    bool Get(uint8_t bitIndex) const
     {
         return IsTrue(bitIndex);
     }
@@ -139,7 +139,7 @@ public:
 
     /** Resets all bits to false;
      */
-    inline void ResetAll()
+    void ResetAll()
     {
         _bits = 0;
     }
@@ -185,7 +185,7 @@ public:
     /** Returns the maximum number of bits that can be stored.
      *  \return Returns the number of bits that can be stored in T.
      */
-    inline uint8_t getMaxBits() const
+    uint8_t getMaxBits() const
     {
         return (sizeof(T) * __CHAR_BIT__);
     }
@@ -194,14 +194,14 @@ public:
      *  \param bitIndex is the zero-based index where the bit value is retrieved.
      *  \return Returns the bit value or false if the bitIndex is invalid.
      */
-    inline bool operator[](uint8_t bitIndex) const
+    bool operator[](uint8_t bitIndex) const
     {
         return IsTrue(bitIndex);
     }
 
     /** The cast operator returns the internal bits.
      */
-    inline operator T() const
+    operator T() const
     {
         return _bits;
     }
@@ -210,7 +210,7 @@ public:
      *  ...Losing the most significant bits and setting false for the least significant bits.
      *  \param shift indicates how many bit positions are shifted.
      */
-    inline void ShiftUp(uint8_t shift)
+    void ShiftUp(uint8_t shift)
     {
         _bits <<= shift;
     }
@@ -219,7 +219,7 @@ public:
      *  ...Losing the least significant bits and setting false for the most significant bits.
      *  \param shift indicates how many bit positions are shifted.
      */
-    inline void ShiftDown(uint8_t shift)
+    void ShiftDown(uint8_t shift)
     {
         _bits >>= shift;
     }
@@ -240,7 +240,7 @@ private:
         return mask;
     }
 
-    inline bool isValidIndex(uint8_t index, uint8_t count = 1) const
+    bool isValidIndex(uint8_t index, uint8_t count = 1) const
     {
         return (index + count) <= getMaxBits();
     }

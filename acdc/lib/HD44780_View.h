@@ -36,7 +36,7 @@ public:
      *  Will keep track of the cursor position and handles carriage (\\r) return and new line (\\n).
      *  \param character is the single character to write to the display (ASCII).
      */
-    inline bool Write(char character)
+    bool Write(char character)
     {
         // check for new-line and carriage return
         if (character == '\n')
@@ -60,7 +60,7 @@ public:
     /** Retrieves the Rows template parameter.
      *  \return Returns the Rows value.
      */
-    inline uint8_t getTotalRows()
+    uint8_t getTotalRows()
     {
         return Rows;
     }
@@ -69,7 +69,7 @@ public:
      *  This value is calculated by 80/Rows - due to the internal memory layout of the LCD display.
      *  \return Returns the 80/Rows value.
      */
-    inline uint8_t getTotalColumns()
+    uint8_t getTotalColumns()
     {
         return 80 / Rows;
     }
@@ -77,7 +77,7 @@ public:
     /** Retrieves the Rows template parameter.
      *  \return Returns the Rows value.
      */
-    inline uint8_t getVisibleRows()
+    uint8_t getVisibleRows()
     {
         return Rows;
     }
@@ -85,7 +85,7 @@ public:
     /** Retrieves the Cols template parameter.
      *  \return Returns the Cols value.
      */
-    inline uint8_t getVisibleColumns()
+    uint8_t getVisibleColumns()
     {
         return Cols;
     }
@@ -95,7 +95,7 @@ public:
      *  \param rowIndex is a zero-based index indicating the line (row).
      *  \param colIndex is a zero-based index indicating the character position.
      */
-    inline void SetCursor(uint8_t rowIndex, uint8_t colIndex)
+    void SetCursor(uint8_t rowIndex, uint8_t colIndex)
     {
         _cursorRow = rowIndex;
         _cursorCol = colIndex;
@@ -105,7 +105,7 @@ public:
     /** Returns the current Cursor row position index.
      *  \return Returns the current row index.
      */
-    inline uint8_t getCursorRow() const
+    uint8_t getCursorRow() const
     {
         return _cursorRow;
     }
@@ -113,7 +113,7 @@ public:
     /** Returns the current Cursor column position index.
      *  \return Returns the current column index.
      */
-    inline uint8_t getCursorCol() const
+    uint8_t getCursorCol() const
     {
         return _cursorCol;
     }
@@ -121,7 +121,7 @@ public:
     /** Overrides the Controller method to adjust current cursor position.
      *  Send the return-home command to the display.
      */
-    inline void ReturnHome()
+    void ReturnHome()
     {
         _cursorCol = 0;
         _cursorRow = 0;
@@ -157,7 +157,7 @@ private:
         }
     }
 
-    inline uint8_t CalcAddress(uint8_t rowIndex, uint8_t colIndex)
+    uint8_t CalcAddress(uint8_t rowIndex, uint8_t colIndex)
     {
         static uint8_t rowOffsets[] = {0x00, 0x40, 0x14, 0x54};
 
@@ -170,7 +170,7 @@ private:
     }
 
     // writes the data address to match the current cursor position.
-    inline void WriteDisplayAddress()
+    void WriteDisplayAddress()
     {
         BaseT::WriteDisplayAddress(CalcAddress(_cursorRow, _cursorCol));
     }

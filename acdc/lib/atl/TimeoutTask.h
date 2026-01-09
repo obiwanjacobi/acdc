@@ -34,7 +34,7 @@ public:
 
         /** Returns the Timeout template parameter.
          */
-        inline uint32_t
+        uint32_t
         getTimeout() const
     {
         return Timeout;

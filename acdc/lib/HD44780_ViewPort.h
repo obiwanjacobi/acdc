@@ -21,7 +21,7 @@ public:
      *  Does not allow to scroll beyond the end of the display.
      *  \return Returns false when the scroll could not performed.
      */
-    inline bool ScrollRight()
+    bool ScrollRight()
     {
         if (_offset > 0)
         {
@@ -37,7 +37,7 @@ public:
      *  Does not allow to scroll beyond the start of the display.
      *  \return Returns false when the scroll could not performed.
      */
-    inline bool ScrollLeft()
+    bool ScrollLeft()
     {
         if (_offset > BaseT::getTotalColumns())
         {
@@ -52,7 +52,7 @@ public:
     /** Returns the current scroll offset.
      *  \return Returns the scroll offset.
      */
-    inline uint8_t getDislayOffset() const
+    uint8_t getDislayOffset() const
     {
         return _offset;
     }

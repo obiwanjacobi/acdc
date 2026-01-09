@@ -11,7 +11,7 @@ public:
     /** Returns an id based on the this pointer.
      *  \return Returns a unique id.
      */
-    inline uint16_t getId() const
+    uint16_t getId() const
     {
         return (uint16_t)this;
     }

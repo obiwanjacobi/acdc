@@ -30,7 +30,7 @@ public:
     /** Gets the maximum number of items the collection can store.
      *  \return Returns the Capacity of the underlying array.
      */
-    inline int16_t getCapacity() const
+    int16_t getCapacity() const
     {
         return _array.getCapacity();
     }
@@ -38,7 +38,7 @@ public:
     /** Gets the current number of items in the collection.
      *  \return Returns the count.
      */
-    inline int16_t getCount() const
+    int16_t getCount() const
     {
         return _count;
     }
@@ -47,7 +47,7 @@ public:
      *  \param index is a zero-based index that has to be greater or equal to 0 (zero) and smaller than the count.
      *  \return Returns true when the index is valid, otherwise false.
      */
-    inline bool IsValidIndex(int16_t index) const
+    bool IsValidIndex(int16_t index) const
     {
         return index >= 0 && index < _count;
     }
@@ -57,7 +57,7 @@ public:
      *  \param item is the item to search for.
      *  \return Returns the index of the position of the item in the collection, or -1 if not found.
      */
-    inline int16_t IndexOf(ItemT item) const
+    int16_t IndexOf(ItemT item) const
     {
         for (int16_t i = 0; i < _count; i++)
         {
@@ -73,7 +73,7 @@ public:
      *  \param index is a zero-based index that has to be greater or equal to 0 (zero) and smaller than the count.
      *  \return Returns the item or a default value.
      */
-    inline ItemT GetAt(int16_t index) const
+    ItemT GetAt(int16_t index) const
     {
         if (!IsValidIndex(index))
             return Default<ItemT>::DefaultOfT;
@@ -86,12 +86,12 @@ public:
      *  \param index is a zero-based index that has to be greater or equal to 0 (zero) and smaller than the count.
      *  \return Returns the item or a default value.
      */
-    inline ItemT operator[](int16_t index) const
+    ItemT operator[](int16_t index) const
     {
         return GetAt(index);
     }
 
-    inline operator const ItemT *() const
+    operator const ItemT *() const
     {
         return _array;
     }
@@ -100,7 +100,7 @@ public:
      *  Does nothing when the collection is full.
      *  \param item is the item to add. Will add NULL.
      */
-    inline bool Add(ItemT item)
+    bool Add(ItemT item)
     {
         if (_count < _array.getCapacity())
         {
@@ -117,7 +117,7 @@ public:
      *  \param index is the position in the collection that gets overwritten with the new item.
      *  \param item is the new value to store at the index position.
      */
-    inline bool SetAt(int16_t index, ItemT item)
+    bool SetAt(int16_t index, ItemT item)
     {
         if (!IsValidIndex(index))
             return false;
@@ -128,7 +128,7 @@ public:
 
     /** Clears the content of the collection.
      */
-    inline void Clear()
+    void Clear()
     {
         _count = 0;
         _array.Clear();
@@ -136,7 +136,7 @@ public:
 
     /** Gets the pointer to the internal array buffer.
      */
-    inline ItemT *getBuffer()
+    ItemT *getBuffer()
     {
         return _array.getBuffer();
     }
