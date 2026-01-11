@@ -32,6 +32,7 @@
 #include "SimpleCommandParser.h"
 #include "SimpleCommandHandler.h"
 #include "BlockDriverTask.h"
+#include "UI.h"
 
 const uint8_t MaxItems = 5;
 #define TimeRes TimeResolution::Milliseconds
@@ -54,6 +55,8 @@ BlockControllerTask<Scheduler> blockControllerTask;
 
 BitArray<uint8_t> lcdData(1 << LED_Index);
 LCD lcd;
+// PageManager pageMgr;
+PageScreen page;
 
 class Program
 {
@@ -64,6 +67,48 @@ public:
 
         // indication that the program is running
         blinkLedTask.Run();
+
+        uint8_t data;
+        if (serial.Receive.TryRead(&data))
+        {
+            NavigationCommands navCmd = NavigationCommands::None;
+            switch (data)
+            {
+            case ',':
+                navCmd = NavigationCommands::Left;
+                break;
+            case '.':
+                navCmd = NavigationCommands::Right;
+                break;
+            case 'x':
+                navCmd = NavigationCommands::Down;
+                break;
+            case 's':
+                navCmd = NavigationCommands::Up;
+                break;
+            case ' ':
+                navCmd = NavigationCommands::Enter;
+                break;
+            case 'a':
+                navCmd = NavigationCommands::Exit;
+                break;
+            default:
+                break;
+            }
+
+            if (navCmd != NavigationCommands::None)
+            {
+                if (page.OnNavigationCommand(navCmd))
+                {
+                    page.Display(&lcd);
+                    // serial.Transmit.WriteLine(" - ok");
+                }
+                else
+                {
+                    serial.Transmit.WriteLine("?");
+                }
+            }
+        }
 
         // blockControllerTask.Run(blockController0, blockController1, blockController2, blockController3);
 
@@ -184,7 +229,13 @@ public:
         lcd.setDataRegister(&lcdData);
         lcd.Initialize();
         lcd.setEnableDisplay();
-        lcd.Write("Hello World");
+
+        // pageMgr.TrySetFirstPage();
+        // pageMgr.getCurrentPage()->TrySelectNextLine();
+        // pageMgr.Display(&lcd);
+
+        page.TrySelectNextLine();
+        page.Display(&lcd);
     }
 
     void Stop(uint8_t code)
@@ -239,36 +290,64 @@ ISR(USART_UDRE_vect)
 
 void AtlDebugWrite(uint8_t componentId, DebugLevel level, const char *message)
 {
-    serial.Transmit.Write(Scheduler::getTicks());
-    serial.Transmit.Write(" [");
-    serial.Transmit.Write(componentId);
-    serial.Transmit.Write("] ");
-
-    switch (level)
-    {
-    case DebugLevel::Critical:
-        serial.Transmit.Write("CRITICAL: ");
-        break;
-    case DebugLevel::Error:
-        serial.Transmit.Write("ERROR: ");
-        break;
-    case DebugLevel::Warning:
-        serial.Transmit.Write("WARNING: ");
-        break;
-    case DebugLevel::Info:
-        serial.Transmit.Write("INFO: ");
-        break;
-    case DebugLevel::Trace:
-        serial.Transmit.Write("TRACE: ");
-        break;
-    case DebugLevel::Debug:
-        serial.Transmit.Write("DEBUG: ");
-        break;
-    default:
-        break;
-    }
+    // switch (level)
+    // {
+    // case DebugLevel::Critical:
+    //     serial.Transmit.Write("!!:");
+    //     break;
+    // case DebugLevel::Error:
+    //     serial.Transmit.Write("!:");
+    //     break;
+    // case DebugLevel::Warning:
+    //     serial.Transmit.Write("?:");
+    //     break;
+    // case DebugLevel::Info:
+    //     serial.Transmit.Write("i:");
+    //     break;
+    // case DebugLevel::Trace:
+    //     serial.Transmit.Write("t:");
+    //     break;
+    // case DebugLevel::Debug:
+    //     serial.Transmit.Write("d:");
+    //     break;
+    // default:
+    //     break;
+    // }
     serial.Transmit.WriteLine(message);
 }
+
+// void AtlDebugWrite(uint8_t componentId, DebugLevel level, const char *message)
+// {
+//     serial.Transmit.Write(Scheduler::getTicks());
+//     serial.Transmit.Write(" [");
+//     serial.Transmit.Write(componentId);
+//     serial.Transmit.Write("] ");
+
+//     switch (level)
+//     {
+//     case DebugLevel::Critical:
+//         serial.Transmit.Write("CRITICAL: ");
+//         break;
+//     case DebugLevel::Error:
+//         serial.Transmit.Write("ERROR: ");
+//         break;
+//     case DebugLevel::Warning:
+//         serial.Transmit.Write("WARNING: ");
+//         break;
+//     case DebugLevel::Info:
+//         serial.Transmit.Write("INFO: ");
+//         break;
+//     case DebugLevel::Trace:
+//         serial.Transmit.Write("TRACE: ");
+//         break;
+//     case DebugLevel::Debug:
+//         serial.Transmit.Write("DEBUG: ");
+//         break;
+//     default:
+//         break;
+//     }
+//     serial.Transmit.WriteLine(message);
+// }
 
 bool AtlDebugFilter(uint8_t componentId, DebugLevel level)
 {

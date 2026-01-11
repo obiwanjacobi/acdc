@@ -49,7 +49,7 @@ public:
      */
     bool IsValidIndex(int16_t index) const
     {
-        return index >= 0 && index < _count;
+        return index >= 0 && (uint16_t)index < _count;
     }
 
     /** Finds the index of the first matching item in the collection.
@@ -59,7 +59,7 @@ public:
      */
     int16_t IndexOf(ItemT item) const
     {
-        for (int16_t i = 0; i < _count; i++)
+        for (int16_t i = 0; i < (int16_t)_count; i++)
         {
             if (_array.GetAt(i) == item)
                 return i;
