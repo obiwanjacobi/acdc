@@ -1,6 +1,12 @@
 #pragma once
 #include "InputControl.h"
 
+enum class ButtonControlEvents
+{
+    // Different from InputControlEvents::ChangeState
+    ChangeState = 0x02
+};
+
 /** Represents a single character on the display that can be toggled on or off.
  *  \tparam OffChar the character to show for the off-state.
  *  \tparam OnChar the character to show for the on-state.
@@ -11,7 +17,8 @@ class ButtonControl : public InputControl
     typedef InputControl BaseT;
 
 public:
-    ButtonControl(uint8_t pos = 0) : BaseT(pos) {}
+    ButtonControl(uint8_t pos = 0, InputControlHandler *handler = nullptr)
+        : BaseT(pos, handler) {}
 
     bool OnNavigationCommand(NavigationCommands navCmd) override
     {
@@ -57,6 +64,7 @@ protected:
         if (BaseT::getIsSelected())
         {
             _buttonState = !_buttonState;
+            BaseT::HandlerOnInputEvent(Event(ButtonControlEvents::ChangeState), EventParam(_buttonState));
             return true;
         }
 

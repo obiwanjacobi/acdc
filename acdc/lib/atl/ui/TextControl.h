@@ -27,11 +27,10 @@ public:
      *  \param str points to the string buffer of the FixedString that is being edited.
      *  \param iterator points to the Iterator that provides the characters during editing.
      *  \param pos is an optional position relative to its siblings.
+     *  \param handler callback handler for custom nav-commands and input events.
      */
-    TextControl(StringT *str, CharacterIteratorT *iterator, uint8_t pos = 0)
-        : BaseT(str, iterator, this, pos)
-    {
-    }
+    TextControl(StringT *str, CharacterIteratorT *iterator, uint8_t pos = 0, InputControlHandler *handler = nullptr)
+        : BaseT(str, iterator, this, pos, handler) {}
 };
 
 template <const char StartChar, const char EndChar>
@@ -71,10 +70,12 @@ class AsciiTextControl : public TextControl<FixedString<Size + 1>, AsciiCharIter
     friend BaseT;
 
 public:
-    AsciiTextControl(uint8_t pos = 0)
-        : BaseT(&_buffer, &TextIterator, pos)
-    {
-    }
+    /** Constructs a new instance.
+     *  \param pos is an optional position relative to its siblings.
+     *  \param handler callback handler for custom nav-commands and input events.
+     */
+    AsciiTextControl(uint8_t pos = 0, InputControlHandler *handler = nullptr)
+        : BaseT(&_buffer, &TextIterator, pos, handler) {}
 
 private:
     FixedString<Size + 1> _buffer;

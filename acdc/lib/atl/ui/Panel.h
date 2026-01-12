@@ -9,6 +9,9 @@ class Panel : public InputControl
     typedef InputControl BaseT;
 
 public:
+    Panel(uint8_t pos = 0, InputControlHandler *handler = nullptr)
+        : BaseT(pos, handler) {}
+
     /** Retrieves the current control.
      *  \return Returns NULL if no current control is set.
      */
@@ -79,19 +82,26 @@ protected:
     /** For derived classes.
      *  \param pos is the optional control position.
      */
-    Panel(uint8_t pos = 0)
-        : InputControl(pos), _currentControl(nullptr)
-    {
-    }
+    Panel(uint8_t pos = 0) : InputControl(pos), _currentControl(nullptr) {}
 
-    /** Overridden to disallow `Selected`
+    /** Overridden to disallow `Selected` - you cannot edit a Panel.
      *  \param newState is the proposed state.
      *  \return Returns true if the state change may occur.
      */
     bool BeforeChangeState(ControlState newState) override
     {
-        return newState != ControlState::Selected &&
-               BaseT::BeforeChangeState(newState);
+        bool success = BaseT::BeforeChangeState(newState) &&
+                       newState != ControlState::Selected;
+
+        if (success)
+        {
+            // If the panel is un-'focused', remove the current control.
+            // Then if the panel is 'focused' again, the first control will be made current.
+            if (newState == ControlState::Normal)
+                setCurrentControl(nullptr);
+        }
+
+        return success;
     }
 
 private:
@@ -99,13 +109,11 @@ private:
 
     void setCurrentControlState(ControlState newState)
     {
-        if (_currentControl != nullptr)
+        if (_currentControl != nullptr &&
+            _currentControl->setState(newState))
         {
-            if (_currentControl->setState(newState))
-            {
-                // Panel takes on the state of the current control.
-                setState(newState);
-            }
+            // Panel takes on the state of the current control.
+            setState(newState);
         }
     }
 };

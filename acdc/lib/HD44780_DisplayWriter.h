@@ -61,6 +61,8 @@ public:
             BaseT::setEnableCursor(true);
         }
 
+        // focused (!edit) => blink
+        // selected (edit) => normal cursor
         if (BaseT::getEnableBlink() == edit)
         {
             BaseT::setEnableBlink(!edit);

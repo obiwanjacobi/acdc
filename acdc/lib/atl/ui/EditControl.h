@@ -11,7 +11,7 @@
  *  `void SetAt(uint8_t, ItemT)` (FixedArray)
  *  `uint8_t getCapacity()` (Array).
  *	\tparam CharacterIteratorT is an Iterator that manages the characters that can be selected
- *  when editing the TextControl and implements:
+ *  when editing the EditControl and implements:
  *  `bool MoveNext()` (Iterator)
  *  `bool MoveBack()` (Iterator)
  *  `bool MoveTo(char)` (Iterator)
@@ -34,14 +34,15 @@ public:
      *  \param iterator points to the Iterator that provides the characters during editing.
      *  \param valueThis is used by the UpDownControl to callback value manipulation on.
      *  \param pos is an optional position relative to its siblings.
+     *  \param handler callback handler for custom nav-commands and input events.
      */
-    EditControl(StringT *str, CharacterIteratorT *iterator, ValueT *valueThis, uint8_t pos = 0)
-        : BaseT(valueThis, pos), _iterator(iterator)
+    EditControl(StringT *str, CharacterIteratorT *iterator, ValueT *valueThis, uint8_t pos = 0, InputControlHandler *handler = nullptr)
+        : BaseT(valueThis, pos, handler), _iterator(iterator)
     {
         setString(str);
     }
 
-    /** Retrieves the text the TextControl displays.
+    /** Retrieves the text the EditControl displays.
      *  Called by the UpDownControl to retrieve the 'value' to display.
      *  \return Returns the pointer to the text. Can be NULL.
      */
@@ -50,7 +51,7 @@ public:
         return (const char *)_str;
     }
 
-    /** Assigns the String the TextControl displays.
+    /** Assigns the String the EditControl displays.
      *  \param text points to a string instance.
      *  The string is NOT copied and the same buffer is used for editing.
      */
@@ -70,13 +71,8 @@ public:
         const char *text = getText();
         if (text != nullptr)
             output->Display(text);
-
-        // erase empty control space
-        // for (uint8_t i = strlen(text); i <= getEditSize(); i++)
-        //{
-        // output->Display(" ");
-        //}
     }
+
     void DisplayCursor(DisplayWriter *output) override
     {
         if (BaseT::getIsSelected())

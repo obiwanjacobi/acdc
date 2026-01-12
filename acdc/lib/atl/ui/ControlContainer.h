@@ -14,18 +14,20 @@ class ControlContainer : public Collection<FixedArray<Control *, MaxItems>>
 public:
     /** Retrieves the Control that is next to the currentCtrl.
      *  \param currentCtrl is a pointer to the Control to use as reference.
-     *  \param type is the type of Control to look for. Uses Control::DynamicCast.
+     *  \param type is the type of Control to look for. Uses ControlCast.
      *  \return Returns NULL if no suitable Control (type) could be found.
      */
     Control *getNext(Control *currentCtrl, ControlTypes type = ControlTypes::Control) const
     {
         int16_t index = 0;
         if (currentCtrl != nullptr)
+        {
             index = BaseT::IndexOf(currentCtrl);
-        if (index == -1)
-            return nullptr;
+            if (index == -1)
+                return nullptr;
+            index++;
+        }
 
-        index++;
         while (index >= 0 && index < BaseT::getCount())
         {
             Control *ctrl = ControlCast(BaseT::GetAt(index), type);
@@ -41,18 +43,20 @@ public:
 
     /** Retrieves the Control that is before the currentCtrl.
      *  \param currentCtrl is a pointer to the Control to use as reference.
-     *  \param type is the type of Control to look for. Uses Control::DynamicCast.
+     *  \param type is the type of Control to look for. Uses ControlCast.
      *  \return Returns NULL if no suitable Control (type) could be found.
      */
     Control *getPrevious(Control *currentCtrl, ControlTypes type = ControlTypes::Control) const
     {
         int16_t index = 0;
         if (currentCtrl != nullptr)
+        {
             index = BaseT::IndexOf(currentCtrl);
-        if (index == -1)
-            return nullptr;
+            if (index == -1)
+                return nullptr;
+            index--;
+        }
 
-        index--;
         while (index >= 0 && index < BaseT::getCount())
         {
             Control *ctrl = ControlCast(BaseT::GetAt(index), type);
@@ -68,6 +72,7 @@ public:
 
     /** Overrides Collection::Add to disallow NULL pointers in the collection.
      *  \param control is the control to add. If NULL nothing happens.
+     *  \return Returns true when successful.
      */
     bool Add(Control *control)
     {

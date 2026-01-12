@@ -1,7 +1,6 @@
 #pragma once
 
 // Macro to enable bitwise ops for enum class types
-
 // Add this macro to the 'enum class' definition to implement |&~operators.
 #define ENUM_FLAG(EnumType)                                                                    \
     inline constexpr EnumType operator|(EnumType lhs, EnumType rhs)                            \

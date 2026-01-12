@@ -21,6 +21,23 @@ enum class NavigationCommands
     Exit
 };
 
+enum class InputControlEvents
+{
+    ChangeState = 0x01,
+};
+
+#define Event(e) (uint8_t)e
+#define EventParam(p) (uint16_t)p
+#define EventPtr(p) (void *)p
+
+class InputControl; // fwd decl
+class InputControlHandler
+{
+public:
+    virtual bool OnNavigationCommand(InputControl *control, NavigationCommands navCmd) { return false; }
+    virtual void OnInputEvent(InputControl *control, uint8_t event, uint16_t param, void *ptr) {}
+};
+
 /** The InputControl is the abstract base class for all Controls that accept input stimuli.
  *  This class derives from Control and from NavigationController (the input).
  *  It can be 'detected' by the ControlCast using the InputControl enum value.
@@ -30,7 +47,8 @@ class InputControl : public Control
     typedef Control BaseT;
 
 public:
-    InputControl(uint8_t pos = 0) : BaseT(pos) {}
+    InputControl(uint8_t pos = 0, InputControlHandler *handler = nullptr)
+        : BaseT(pos), _handler(handler) {}
 
     /** Implements selection behavior on the `Enter` and `Exit` navigation commands.
      *  If the Control is in `Focused` and the `Enter` commands is provided, it will
@@ -42,19 +60,26 @@ public:
      */
     virtual bool OnNavigationCommand(NavigationCommands navCmd)
     {
-        switch (navCmd)
+        bool handled = HandlerOnNavigationCommand(navCmd);
+
+        if (!handled)
         {
-        case NavigationCommands::Enter:
-            // LogTrace("Inp:Nav-Ent");
-            return TrySelect();
-        case NavigationCommands::Exit:
-            // LogTrace("Inp:Ext");
-            return TryDeselect();
-        default:
-            break;
+            switch (navCmd)
+            {
+            case NavigationCommands::Enter:
+                // LogTrace("Inp:Nav-Ent");
+                handled = TrySelect();
+                break;
+            case NavigationCommands::Exit:
+                // LogTrace("Inp:Ext");
+                handled = TryDeselect();
+                break;
+            default:
+                break;
+            }
         }
 
-        return false;
+        return handled;
     }
 
     /** Attempts to get the Control from the `Focused` to the `Selected` state.
@@ -64,7 +89,9 @@ public:
     {
         if (BaseT::getIsFocused())
         {
-            BaseT::setState(ControlState::Selected);
+            if (BaseT::setState(ControlState::Selected))
+                HandlerOnInputEvent(Event(InputControlEvents::ChangeState), EventParam(ControlState::Selected));
+
             return true;
         }
         return false;
@@ -77,7 +104,9 @@ public:
     {
         if (BaseT::getIsSelected())
         {
-            BaseT::setState(ControlState::Focused);
+            if (BaseT::setState(ControlState::Focused))
+                HandlerOnInputEvent(Event(InputControlEvents::ChangeState), EventParam(ControlState::Focused));
+
             return true;
         }
         return false;
@@ -102,8 +131,8 @@ protected:
         if (!BaseT::BeforeChangeState(newState))
             return false;
 
-        // don't allow focus when disabled (or hidden).
-        if (newState == ControlState::Focused &&
+        // don't allow focus/select when disabled (or hidden).
+        if ((newState == ControlState::Focused || newState == ControlState::Selected) &&
             !BaseT::getIsEnabled())
         {
             return false;
@@ -111,4 +140,24 @@ protected:
 
         return true;
     }
+
+    bool HandlerOnNavigationCommand(NavigationCommands navCmd)
+    {
+        if (_handler == nullptr)
+            return false;
+
+        return _handler->OnNavigationCommand(this, navCmd);
+    }
+
+    bool HandlerOnInputEvent(uint8_t event, uint16_t param, void *ptr = nullptr)
+    {
+        if (_handler == nullptr)
+            return false;
+
+        _handler->OnInputEvent(this, event, param, ptr);
+        return true;
+    }
+
+private:
+    InputControlHandler *_handler;
 };

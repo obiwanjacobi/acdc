@@ -57,7 +57,7 @@ protected:
      *  \param pos is the optional control position.
      */
     PanelControlContainer(uint8_t pos = 0)
-        : Panel(pos)
+        : Panel(pos, nullptr)
     {
     }
 };

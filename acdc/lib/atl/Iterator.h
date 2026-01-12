@@ -22,18 +22,13 @@ public:
 
     /** Constructs the instance.
      */
-    Iterator()
-        : _index(-1)
-    {
-    }
+    Iterator() : _index(-1) {}
 
     /** Constructs an initialized instance.
-     *  \param array points to the array.
+     *  \param array points to the (untyped) array that is passed to BaseT.
      */
-    Iterator(const ItemT *array)
-        : BaseT(array), _index(-1)
-    {
-    }
+    Iterator(const void *array)
+        : BaseT(array), _index(-1) {}
 
     /** Moves to the next item.
      *  \return Returns true when successful.
@@ -73,6 +68,19 @@ public:
         return true;
     }
 
+    /** Moves to the specified index.
+     *  \param index is the new index.
+     *  \return Returns true when successful.
+     */
+    bool MoveToIndex(IndexT index)
+    {
+        if (!IsValidIndex(index))
+            return false;
+
+        _index = index;
+        return true;
+    }
+
     /** Resets the current position to just before the beginning.
      *  Either MoveNext or MoveTo methods must be called before there is a valid current item.
      */
@@ -98,6 +106,14 @@ public:
             return BaseT::getDefaultItem();
 
         return BaseT::GetAt(_index);
+    }
+
+    /** Retrieves the current position (index).
+     *  \return Returns the index, can be invalid.
+     */
+    IndexT getCurrentIndex() const
+    {
+        return _index;
     }
 
 protected:

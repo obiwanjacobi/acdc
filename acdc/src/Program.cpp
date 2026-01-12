@@ -55,8 +55,8 @@ BlockControllerTask<Scheduler> blockControllerTask;
 
 BitArray<uint8_t> lcdData(1 << LED_Index);
 LCD lcd;
-// PageManager pageMgr;
-PageScreen page;
+PageManager pageMgr;
+// PageScreen page;
 
 class Program
 {
@@ -98,9 +98,9 @@ public:
 
             if (navCmd != NavigationCommands::None)
             {
-                if (page.OnNavigationCommand(navCmd))
+                if (pageMgr.OnNavigationCommand(navCmd))
                 {
-                    page.Display(&lcd);
+                    pageMgr.Display(&lcd);
                     // serial.Transmit.WriteLine(" - ok");
                 }
                 else
@@ -230,12 +230,12 @@ public:
         lcd.Initialize();
         lcd.setEnableDisplay();
 
-        // pageMgr.TrySetFirstPage();
-        // pageMgr.getCurrentPage()->TrySelectNextLine();
-        // pageMgr.Display(&lcd);
+        if (pageMgr.TrySetFirstPage())
+            pageMgr.getCurrentPage()->TrySelectNextLine();
+        pageMgr.Display(&lcd);
 
-        page.TrySelectNextLine();
-        page.Display(&lcd);
+        // page.TrySelectNextLine();
+        // page.Display(&lcd);
     }
 
     void Stop(uint8_t code)

@@ -227,7 +227,8 @@ protected:
             line->getCurrentControl() == nullptr)
         {
             // LogTrace("Pg:Fcs1");
-            //  there is no other way to access the control collection
+            // Panel has no way to access the control collection
+            // This could fail if the lines are not PanelControlContainer
             return line->OnNavigationCommand(NavigationCommands::Right);
         }
 

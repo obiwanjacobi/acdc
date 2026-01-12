@@ -31,13 +31,14 @@ Control Class Hierarchy:
     - `UpDownControl`
       - `EditControl`
         - `TextControl`
-      - `Panel`
-        - `PanelControlContainer` (+`ControlContainer`)
-          - `HorizontalPanel`
-            - `Line`
-          - `VerticalPanel`
-            - `Page`
-          - `PageController`
+    - `ButtonControl`
+    - `Panel`
+      - `PanelControlContainer` (+`ControlContainer`)
+        - `HorizontalPanel`
+          - `Line`
+        - `VerticalPanel`
+          - `Page`
+        - `PageController`
 
 A typical LCD Page layout (2 lines):
 
@@ -57,7 +58,7 @@ A base class for all controls.
 
 - Position. Position of the control inside its container.
 - State. Disabled/Focussed/Selected. Manages state changes.
-- ControlCast/IsType. Lightweight runtime type information.
+- ControlCast/IsType. Lightweight runtime type information (`ControlTypes`).
 - Display. Called to draw the control.
 
 ### `LabelControl` extends `Control` (class)
@@ -67,6 +68,8 @@ A read-only display text for labelling other controls.
 ### `InputControl` extends `Control` (class)
 
 A base class for all controls that use the `NavigationCommands` to allow editing their content.
+
+This class allows registering a `InputControlHandler` that can intercept navigation commands and receives InputControl events.
 
 ### `UpDownControl` extends `InputControl` (template)
 
@@ -130,6 +133,7 @@ An abstraction to decouple drawing controls and UI in general onto any display.
 
 ## TODO
 
-- VerticalScrollPanel (code manages lines to display)
-- HorizontalScrollPanel (uses HD44780_ViewPort - `DisplayWriter` extension?)
+- VerticalScrollPanel (code manages lines to display) handles more lines than display height.
+- HorizontalScrollPanel (uses HD44780_ViewPort - `DisplayWriter` extension?) handles more characters than display width.
 - MenuPage (VerticalScrollPanel)
+- Decide if Page uses PanelControlContainer, HorizontalPanel or Line as 'line'.

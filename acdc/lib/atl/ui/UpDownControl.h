@@ -17,10 +17,11 @@ class UpDownControl : public InputControl
 public:
     /** Constructs an initialized instance.
      *  \param value points to the value instance. Must not be NULL.
-     *  \pos is the optional position relative to its siblings.
+     *  \param pos is the optional position relative to its siblings.
+     *  \param handler callback handler for custom nav-commands and input events.
      */
-    UpDownControl(ValueT *value, uint8_t pos = 0)
-        : BaseT(pos), _value(value)
+    UpDownControl(ValueT *value, uint8_t pos = 0, InputControlHandler *handler = nullptr)
+        : BaseT(pos, handler), _value(value)
     {
     }
 
