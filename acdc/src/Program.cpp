@@ -16,6 +16,7 @@
 
 #include "../lib/atl/Debug.h"
 #include "../lib/atl/Delays.h"
+#include "../lib/atl/FixedArray.h"
 #include "../lib/atl/FixedString.h"
 #include "../lib/atl/Time.h"
 #include "../lib/atl/TimeResolution.h"
@@ -228,6 +229,27 @@ public:
 
         lcd.setDataRegister(&lcdData);
         lcd.Initialize();
+
+        FixedArray<uint8_t, 8> character;
+        character[0] = 0b00000;
+        character[1] = 0b00100;
+        character[2] = 0b01010;
+        character[3] = 0b10001;
+        character[4] = 0b01010;
+        character[5] = 0b00100;
+        character[6] = 0b00000;
+        character[7] = 0b00000;
+        lcd.CreateCharacter(0, &character);
+        character[0] = 0b00000;
+        character[1] = 0b00100;
+        character[2] = 0b01110;
+        character[3] = 0b11111;
+        character[4] = 0b01110;
+        character[5] = 0b00100;
+        character[6] = 0b00000;
+        character[7] = 0b00000;
+        lcd.CreateCharacter(1, &character);
+
         lcd.setEnableDisplay();
 
         if (pageMgr.TrySetFirstPage())

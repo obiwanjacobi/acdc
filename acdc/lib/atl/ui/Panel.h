@@ -20,8 +20,7 @@ public:
     /** Retrieves the current control.
      *  \return Returns NULL if no current control is set.
      */
-    InputControl *
-    getCurrentControl() const
+    InputControl *getCurrentControl() const
     {
         return _currentControl;
     }

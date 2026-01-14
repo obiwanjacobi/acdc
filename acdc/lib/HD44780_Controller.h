@@ -60,7 +60,7 @@ public:
         // 2l = 2 line display (not single line) (N)
         // F = Font not available for multi-line.
         // * = don't care
-        uint8_t funSet = 0x20 | singleRowDisplay ? 0 : 8;
+        uint8_t funSet = FunctionSetCommand | singleRowDisplay ? 0 : 8;
         if (!BaseT::WriteCommand(funSet))
             return false;
 
@@ -196,13 +196,28 @@ public:
         WriteEntryMode();
     }
 
+    /** Creates a custom character in the LCD.
+     *  \param characterPos A value between 0-7. Use the same value to display the character.
+     *  \param characterData an array with 8 bytes where the lower 5 bits of
+     *      each byte contains the character data.
+     */
+    void CreateCharacter(uint8_t characterPos, Array<uint8_t, 8> *characterData)
+    {
+        WriteCharacterAddress((characterPos & 0x07) << 3);
+        for (uint8_t i = 0; i < 8; i++)
+        {
+            // BaseT::WriteData(characterData->GetAt(i));
+            BaseT::WriteData(0x55);
+        }
+    }
+
 protected:
     /** Send a command that sets the cursor position.
      *  \param address is the memory address in the display.
      */
     void WriteDisplayAddress(uint8_t address)
     {
-        BaseT::WriteCommand(address | SetDdRamAddressCommand);
+        BaseT::WriteCommand((address & 0x7F) | SetDdRamAddressCommand);
         TimingProfileT::WaitForCommand();
     }
 
@@ -283,7 +298,7 @@ private:
         SetEntryModeCommand = 1 << 2,
         DisplayControlCommand = 1 << 3,
         ShiftCursorCommand = 1 << 4,
-        // FunctionSetCommand = 1 << 5,
+        FunctionSetCommand = 1 << 5,
         SetCgRamAddressCommand = 1 << 6,
         SetDdRamAddressCommand = 1 << 7
     };

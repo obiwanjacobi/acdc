@@ -152,9 +152,9 @@ An abstraction to decouple drawing controls and UI in general onto any display.
 
 ## TODO
 
-- VerticalScrollPanel (code manages lines to display) handles more lines than display height.
 - HorizontalScrollPanel (uses HD44780_ViewPort - `DisplayWriter` extension?) handles more characters than display width.
 - MenuPage (VerticalScrollPanel)
 - Decide if Page uses PanelControlContainer, HorizontalPanel or Line as 'line'.
 - Page: have method to know if any control is focused and/or selected.
 - Test runtime changes of ControlState::Hidden etc.
+- OptionsControl has a problem with repositioning the iterator (probably). Initial value change does nothing.
