@@ -5,25 +5,29 @@
 /** The Page class manages the Lines that are displayed together as one (page).
  *  Lines run horizontally and are organized in a VerticalPanel.
  *  \tparam MaxLines is the maximum number of lines on the Page.
+ *  \tparam BaseT a `VerticalPanel` compatible base class.
+ *      `Add(Panel*)`
+ *      `Display(DisplayWriter*)`
+ *      `setCurrentControl(InputControl*)`
+ *      `SetNextInputControl()`
+ *      `SetPreviousInputControl()`
  */
-template <const uint8_t MaxLines>
-class Page : public VerticalPanel<MaxLines>
+template <const uint8_t MaxLines, class BaseT = VerticalPanel<MaxLines>>
+class Page : public BaseT
 {
-    typedef VerticalPanel<MaxLines> BaseT;
-
 public:
+    typedef Panel ItemT;
+
     /** Constructs the instance.
      *  Lines have to be added using the Add method.
      */
-    Page()
-    {
-    }
+    Page() {}
 
     /** Constructs the instance.
      *  Lines can be added using the Add method.
      *  \param line1 is the first line.
      */
-    Page(Panel *line1)
+    Page(ItemT *line1)
     {
         static_assert(MaxLines >= 1);
         BaseT::Add(line1);
@@ -34,7 +38,7 @@ public:
      *  \param line1 is the first line.
      *  \param line2 is the second line.
      */
-    Page(Panel *line1, Panel *line2)
+    Page(ItemT *line1, ItemT *line2)
     {
         static_assert(MaxLines >= 2);
         BaseT::Add(line1);
@@ -48,7 +52,7 @@ public:
      *  \param line3 is the third line.
      *  \param line4 is the fourth line.
      */
-    Page(Panel *line1, Panel *line2, Panel *line3, Panel *line4)
+    Page(ItemT *line1, ItemT *line2, ItemT *line3, ItemT *line4)
     {
         static_assert(MaxLines >= 4);
         BaseT::Add(line1);
@@ -58,7 +62,7 @@ public:
     }
 
     /** Calls `Display` on all its lines.
-     *  This method also implements drawing the cursor after a normal call.
+     *  This method also calls `DisplayCursor` for drawing the cursor.
      *  \param output is used to output text and position the cursor.
      */
     void Display(DisplayWriter *output) override
@@ -78,7 +82,7 @@ public:
 
         if (ctrl != nullptr && ctrl->getIsActive())
         {
-            Panel *line = getCurrentLine();
+            ItemT *line = getCurrentLine();
             output->EnableCursor(line->getPosition(), ctrl->getPosition(), ctrl->getIsSelected());
 
             ctrl->DisplayCursor(output);
@@ -86,7 +90,7 @@ public:
         else
         {
             // cursor off
-            output->EnableCursor(DisplayWriter::CurrentPos, DisplayWriter::CurrentPos, false);
+            output->DisableCursor();
         }
     }
 
@@ -119,8 +123,8 @@ public:
         }
 
         if (!handled)
-            // Skip VerticalPanel because we reimplemented line navigation (up/down) here.
-            handled = PanelControlContainer<MaxLines>::OnNavigationCommand(navCmd);
+            // Skip BaseT (VerticalPanel) because we reimplemented line navigation (up/down) here.
+            handled = this->BaseT::BaseT::OnNavigationCommand(navCmd);
 
         return handled;
     }
@@ -196,9 +200,9 @@ public:
     /** Retrieves the current line.
      *  \return Returns NULL if no current line is available.
      */
-    inline Panel *getCurrentLine() const
+    inline ItemT *getCurrentLine() const
     {
-        return (Panel *)BaseT::getCurrentControl();
+        return (ItemT *)BaseT::getCurrentControl();
     }
 
     /** Retrieves the Control on the current line that is focused or selected.
@@ -206,7 +210,7 @@ public:
      */
     InputControl *getCurrentInputControl() const
     {
-        Panel *currentLine = getCurrentLine();
+        ItemT *currentLine = getCurrentLine();
 
         if (currentLine != nullptr)
             return currentLine->getCurrentControl();
@@ -221,7 +225,7 @@ protected:
      */
     inline bool TryFocusFirstControl()
     {
-        Panel *line = getCurrentLine();
+        ItemT *line = getCurrentLine();
 
         if (line != nullptr &&
             line->getCurrentControl() == nullptr)

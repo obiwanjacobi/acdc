@@ -37,6 +37,14 @@ public:
     {
     }
 
+    /** Removes the cursor from the display
+     */
+    void DisableCursor()
+    {
+        // secret speak to disable cursor and save one virtual in the v-table.
+        EnableCursor(DisplayWriter::CurrentPos, DisplayWriter::CurrentPos, false);
+    }
+
 protected:
     DisplayWriter()
     {

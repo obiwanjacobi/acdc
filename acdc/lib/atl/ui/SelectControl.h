@@ -22,10 +22,10 @@
 template <class OptionsIteratorT, class ValueT>
 class SelectControl : public UpDownControl<ValueT>
 {
+public:
     typedef UpDownControl<ValueT> BaseT;
     friend BaseT;
 
-public:
     /** Constructs an initialized instance.
      *  \param iterator points to the Iterator that provides the options that can be selected.
      *  \param valueThis is used by the UpDownControl to callback value manipulation on.
@@ -33,9 +33,7 @@ public:
      *  \param handler callback handler for custom nav-commands and input events.
      */
     SelectControl(OptionsIteratorT *iterator, ValueT *valueThis, uint8_t pos = 0, InputControlHandler *handler = nullptr)
-        : BaseT(valueThis, pos, handler), _iterator(iterator)
-    {
-    }
+        : BaseT(valueThis, pos, handler), _iterator(iterator) {}
 
     /** Retrieves the text the TextControl displays.
      *  Called by the UpDownControl to retrieve the 'value' to display.

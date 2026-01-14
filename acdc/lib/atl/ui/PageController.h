@@ -9,9 +9,9 @@
 template <const uint8_t LinesPerPage, const uint8_t MaxPages>
 class PageController : public PanelControlContainer<MaxPages>
 {
+public:
     typedef PanelControlContainer<MaxPages> BaseT;
 
-public:
     /** The Page type. */
     typedef Page<LinesPerPage> PageT;
 

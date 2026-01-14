@@ -10,7 +10,10 @@
 #include "../lib/atl/ui/OptionsControl.h"
 #include "../lib/atl/ui/Page.h"
 #include "../lib/atl/ui/PageController.h"
+#include "../lib/atl/ui/VerticalPanel.h"
+#include "../lib/atl/ui/VerticalScrollPanel.h"
 #include "../lib/atl/ui/Line.h"
+
 #include "../lib/atl/FixedArray.h"
 #include "../lib/atl/Singleton.h"
 #include "HD44780.h"
@@ -26,22 +29,23 @@ class TraceHandler : public InputControlHandler
 public:
     bool OnNavigationCommand(InputControl *control, NavigationCommands navCmd) override
     {
-        LogTrace("Hnd:Nav");
+        // LogTrace("Hnd:Nav");
         return false;
     }
     void OnInputEvent(InputControl *control, uint8_t event, uint16_t param, void *ptr) override
     {
-        LogTrace("Hnd:Evt");
+        // LogTrace("Hnd:Evt");
     }
 };
 
-class PageScreen : public Screen
+class PageScreen : public Page<LcdLines, VerticalScrollPanel<LcdLines, LcdLines + 1>>
 {
 public:
     PageScreen()
     {
         Add(&Line1);
         Add(&Line2);
+        Add(&Line3);
     }
 
 private:
@@ -75,6 +79,7 @@ private:
 private:
     PageLine Line1;
     PageLine Line2;
+    PageLine Line3;
 
     static TraceHandler _traceHandler;
 };

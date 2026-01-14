@@ -40,9 +40,7 @@ class Control
 {
 public:
     Control(uint8_t pos = 0, ControlState state = ControlState::Normal)
-        : _pos(pos), _state(state)
-    {
-    }
+        : _pos(pos), _state(state) {}
 
     uint8_t getPosition() const { return _pos; }
     void setPosition(uint8_t newPos) { _pos = newPos; }

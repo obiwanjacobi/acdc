@@ -19,10 +19,10 @@
 template <class StringT, class CharacterIteratorT>
 class TextControl : public EditControl<StringT, CharacterIteratorT, TextControl<StringT, CharacterIteratorT>>
 {
+public:
     typedef EditControl<StringT, CharacterIteratorT, TextControl<StringT, CharacterIteratorT>> BaseT;
     friend BaseT;
 
-public:
     /** Constructs an initialized instance.
      *  \param str points to the string buffer of the FixedString that is being edited.
      *  \param iterator points to the Iterator that provides the characters during editing.
@@ -64,12 +64,14 @@ public:
 typedef WrapAroundIterator<CharRangeProvider<0x20, 0x7E>> AsciiCharIterator;
 
 template <const uint8_t Size>
-class AsciiTextControl : public TextControl<FixedString<Size + 1>, AsciiCharIterator>
+class AsciiTextControl : public TextControl<FixedString<Size + 1, ' '>, AsciiCharIterator>
 {
-    typedef TextControl<FixedString<Size + 1>, AsciiCharIterator> BaseT;
-    friend BaseT;
+    typedef FixedString<Size + 1, ' '> StringT;
 
 public:
+    typedef TextControl<StringT, AsciiCharIterator> BaseT;
+    friend BaseT;
+
     /** Constructs a new instance.
      *  \param pos is an optional position relative to its siblings.
      *  \param handler callback handler for custom nav-commands and input events.
@@ -78,7 +80,7 @@ public:
         : BaseT(&_buffer, &TextIterator, pos, handler) {}
 
 private:
-    FixedString<Size + 1> _buffer;
+    StringT _buffer;
 
     // one static instance
     static AsciiCharIterator TextIterator;

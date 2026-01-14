@@ -25,10 +25,10 @@
 template <class StringT, class CharacterIteratorT, class ValueT>
 class EditControl : public UpDownControl<ValueT>
 {
+public:
     typedef UpDownControl<ValueT> BaseT;
     friend BaseT;
 
-public:
     /** Constructs an initialized instance.
      *  \param str points to the string buffer of the FixedString that is being edited.
      *  \param iterator points to the Iterator that provides the characters during editing.

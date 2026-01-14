@@ -25,6 +25,7 @@ public:
     FixedString()
     {
         BaseT::Clear();
+        CopyFrom(nullptr);
     }
 
     /** Constructs an initialized instance.
@@ -55,14 +56,19 @@ public:
     /** Copy's in the specified text.
      *  Will never copy more than MaxChars characters from text.
      *  \param text is a pointer to a zero-terminated string.
+     *      If null the entire string filled with `FillChar`.
      */
     void CopyFrom(const char *text)
     {
-        auto len = strlen(text);
+        size_t len = 0;
         auto buffer = BaseT::getBuffer();
         const uint16_t maxChars = BaseT::getCapacity();
 
-        strncpy(buffer, text, maxChars);
+        if (text != nullptr)
+        {
+            len = strlen(text);
+            strncpy(buffer, text, maxChars);
+        }
 
         if (len < maxChars)
             memset(buffer + len, FillChar, maxChars - len);

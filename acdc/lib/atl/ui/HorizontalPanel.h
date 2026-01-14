@@ -9,16 +9,14 @@
 template <const uint8_t MaxItems>
 class HorizontalPanel : public PanelControlContainer<MaxItems>
 {
+public:
     typedef PanelControlContainer<MaxItems> BaseT;
 
-public:
     /** Constructs the instance with an option position.
      *  \param pos is the position relative to its siblings.
      */
     HorizontalPanel(uint8_t pos = 0)
-        : BaseT(pos)
-    {
-    }
+        : BaseT(pos) {}
 
     /** Routes the command to its BaseT and implements Panel navigation.
      *  If the navCmd is not handled by BaseT the Panel adjusts the current (selected) control

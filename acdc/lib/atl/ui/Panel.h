@@ -2,20 +2,26 @@
 #include "DisplayWriter.h"
 #include "InputControl.h"
 
+enum class PanelEvents
+{
+    /** param=ControlState, ptr=CurrentControl*/
+    PanelChangeState = 0x03
+};
+
 /** The Panel abstract class maintains a reference to the current control.
  */
 class Panel : public InputControl
 {
+public:
     typedef InputControl BaseT;
 
-public:
-    Panel(uint8_t pos = 0, InputControlHandler *handler = nullptr)
-        : BaseT(pos, handler) {}
+    Panel(uint8_t pos = 0, InputControlHandler *handler = nullptr) : BaseT(pos, handler) {}
 
     /** Retrieves the current control.
      *  \return Returns NULL if no current control is set.
      */
-    InputControl *getCurrentControl() const
+    InputControl *
+    getCurrentControl() const
     {
         return _currentControl;
     }
@@ -114,6 +120,8 @@ private:
         {
             // Panel takes on the state of the current control.
             setState(newState);
+            // notifies of current-controls being set and unset (removed).
+            HandlerOnInputEvent(Event(PanelEvents::PanelChangeState), EventParam(newState), EventPtr(_currentControl));
         }
     }
 };

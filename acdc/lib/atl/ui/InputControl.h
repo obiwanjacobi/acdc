@@ -23,6 +23,7 @@ enum class NavigationCommands
 
 enum class InputControlEvents
 {
+    /** param=ControlState ptr=nullptr */
     ChangeState = 0x01,
 };
 
@@ -34,7 +35,9 @@ class InputControl; // fwd decl
 class InputControlHandler
 {
 public:
+    // called to allow to process a navigation command before InputControl's logic is executed.
     virtual bool OnNavigationCommand(InputControl *control, NavigationCommands navCmd) { return false; }
+    // called to notify of a control-specific event.
     virtual void OnInputEvent(InputControl *control, uint8_t event, uint16_t param, void *ptr) {}
 };
 
@@ -44,9 +47,9 @@ public:
  */
 class InputControl : public Control
 {
+public:
     typedef Control BaseT;
 
-public:
     InputControl(uint8_t pos = 0, InputControlHandler *handler = nullptr)
         : BaseT(pos), _handler(handler) {}
 
@@ -138,6 +141,7 @@ protected:
             return false;
         }
 
+        HandlerOnInputEvent(Event(InputControlEvents::ChangeState), EventParam(newState));
         return true;
     }
 

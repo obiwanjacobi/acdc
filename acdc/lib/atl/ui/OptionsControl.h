@@ -46,10 +46,10 @@ private:
 template <class OptionsT>
 class OptionsControl : public SelectControl<Iterator<OptionsIterator<OptionsT>>, OptionsControl<OptionsT>>
 {
+public:
     typedef SelectControl<Iterator<OptionsIterator<OptionsT>>, OptionsControl<OptionsT>> BaseT;
     friend BaseT;
 
-public:
     /** Constructs an initialized instance.
      *  \param options (pointer to) the options (of type OptionsT).
      *  \param pos is an optional position relative to its siblings.

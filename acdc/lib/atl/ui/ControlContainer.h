@@ -9,9 +9,9 @@
 template <const uint8_t MaxItems>
 class ControlContainer : public Collection<FixedArray<Control *, MaxItems>>
 {
+public:
     typedef Collection<FixedArray<Control *, MaxItems>> BaseT;
 
-public:
     /** Retrieves the Control that is next to the currentCtrl.
      *  \param currentCtrl is a pointer to the Control to use as reference.
      *  \param type is the type of Control to look for. Uses ControlCast.

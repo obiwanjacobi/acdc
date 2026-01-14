@@ -27,7 +27,7 @@ public:
         Trace("Initialize");
         if (!BaseT::Initialize(Rows == 1))
             return false;
-        BaseT::SetEntryMode(BaseT::Left, false);
+        BaseT::SetEntryMode(BaseT::Direction::Left, false);
         return true;
     }
 

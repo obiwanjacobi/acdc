@@ -17,6 +17,35 @@ public:
     {
     }
 
+    /** Returns the current scroll offset.
+     *  \return Returns the scroll offset.
+     */
+    uint8_t getScrollPosition() const
+    {
+        return _offset;
+    }
+
+    /** Scrolls the display to the specified position.
+     *  \param scrollPos the character position to scroll to.
+     *  \return Returns false if the scrollPos is invalid.
+     */
+    bool setScrollPosition(uint8_t scrollPos)
+    {
+        if (scrollPos < 0 || scrollPos > BaseT::getTotalColumns())
+            return false;
+
+        int8_t diff = _offset - scrollPos;
+        BaseT::Direction dir = BaseT::Direction::Left;
+        if (diff < 0)
+            dir = Base::Direction::Right;
+
+        for (int8_t i = 0; i < Math::Abs(diff); i++)
+            BaseT::WriteCursorShift(true, dir);
+
+        _offset = scrollPos;
+        return true;
+    }
+
     /** Scrolls the text one position to the right.
      *  Does not allow to scroll beyond the end of the display.
      *  \return Returns false when the scroll could not performed.
@@ -26,7 +55,7 @@ public:
         if (_offset > 0)
         {
             _offset--;
-            BaseT::WriteCursorShift(true, BaseT::Right);
+            BaseT::WriteCursorShift(true, BaseT::Direction::Right);
             return true;
         }
 
@@ -42,19 +71,11 @@ public:
         if (_offset > BaseT::getTotalColumns())
         {
             _offset++;
-            BaseT::WriteCursorShift(true, BaseT::Left);
+            BaseT::WriteCursorShift(true, BaseT::Direction::Left);
             return true;
         }
 
         return false;
-    }
-
-    /** Returns the current scroll offset.
-     *  \return Returns the scroll offset.
-     */
-    uint8_t getDislayOffset() const
-    {
-        return _offset;
     }
 
 private:

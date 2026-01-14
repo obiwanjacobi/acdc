@@ -14,9 +14,9 @@ class HD44780_Controller : public BaseT
 public:
     static const uint8_t DebugComponentId = 20;
 
-    /** Enumerates the horizontal direction.
+    /** Horizontal (scroll) direction.
      */
-    enum Direction
+    enum class Direction
     {
         /** To the Left. */
         Left,
@@ -28,9 +28,7 @@ public:
      *  Constructs the instance.
      */
     HD44780_Controller()
-        : _registers(0)
-    {
-    }
+        : _registers(0) {}
 
     /** Performs the LCD initialization sequence - only when full is true.
      *  Clears the display and resets cursor position.
@@ -164,9 +162,9 @@ public:
     /** Sends a command to set the direction of text entry.
      *  \param dir is the horizontal direction of text entry.
      */
-    void setEntryCursorDirection(Direction dir = Left)
+    void setEntryCursorDirection(Direction dir = Direction::Left)
     {
-        _registers.Set(EntryCursorDirection, dir == Left);
+        _registers.Set(EntryCursorDirection, dir == Direction::Left);
         WriteEntryMode();
     }
 
@@ -193,7 +191,7 @@ public:
      */
     void SetEntryMode(Direction entryCursorDirection, bool enableDisplayShift)
     {
-        _registers.Set(EntryCursorDirection, entryCursorDirection == Left);
+        _registers.Set(EntryCursorDirection, entryCursorDirection == Direction::Left);
         _registers.Set(EntryDisplayShift, enableDisplayShift);
         WriteEntryMode();
     }
@@ -225,7 +223,7 @@ protected:
     {
         uint8_t cmd = ShiftCursorCommand;
         cmd |= shiftDisplay ? 0x08 : 0;
-        cmd |= shiftDir == Right ? 0x04 : 0;
+        cmd |= shiftDir == Direction::Right ? 0x04 : 0;
 
         BaseT::WriteCommand(cmd);
         TimingProfileT::WaitForCommand();

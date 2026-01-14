@@ -9,16 +9,14 @@
 template <const uint8_t MaxItems>
 class VerticalPanel : public PanelControlContainer<MaxItems>
 {
+public:
     typedef PanelControlContainer<MaxItems> BaseT;
 
-public:
     /** Constructs the instance with an option position.
      *  \param pos is the position relative to its siblings.
      */
     VerticalPanel(uint8_t pos = 0)
-        : BaseT(pos)
-    {
-    }
+        : BaseT(pos) {}
 
     /** Adds a Control to the panel. If the Control's position is zero
      *  it is added to the bottom of the panel and it's position is updated.
@@ -28,9 +26,6 @@ public:
      */
     bool Add(Control *control)
     {
-        if (control == nullptr)
-            return false;
-
         if (BaseT::Add(control))
         {
             if (control->getPosition() == 0)
@@ -54,11 +49,11 @@ public:
             switch (navCmd)
             {
             case NavigationCommands::Up:
-                LogTrace("Vp:Nav-U");
+                // LogTrace("Vp:Nav-U");
                 handled = BaseT::SetPreviousInputControl();
                 break;
             case NavigationCommands::Down:
-                LogTrace("Vp:Nav-D");
+                // LogTrace("Vp:Nav-D");
                 handled = BaseT::SetNextInputControl();
                 break;
             default:
@@ -78,7 +73,6 @@ public:
         for (uint8_t i = 0; i < BaseT::getCount(); i++)
         {
             Control *ctrl = BaseT::GetAt(i);
-
             if (ctrl->getIsVisible())
             {
                 output->GoTo(ctrl->getPosition(), 0);

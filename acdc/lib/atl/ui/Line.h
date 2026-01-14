@@ -9,9 +9,9 @@
 template <const uint8_t MaxItems>
 class Line : public HorizontalPanel<MaxItems>
 {
+public:
     typedef HorizontalPanel<MaxItems> BaseT;
 
-public:
     /** Constructs the instance.
      *  Controls have to be added with the Add method.
      */

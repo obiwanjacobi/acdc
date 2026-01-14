@@ -10,9 +10,9 @@ template <const uint8_t MaxItems>
 class PanelControlContainer : public Panel,
                               public ControlContainer<MaxItems>
 {
+public:
     typedef ControlContainer<MaxItems> BaseT;
 
-public:
     /** Assigns the first InputControl in the container to be the current control (Panel).
      *  \return Returns true if successful.
      */

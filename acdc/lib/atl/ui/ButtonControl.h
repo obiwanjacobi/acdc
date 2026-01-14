@@ -3,8 +3,8 @@
 
 enum class ButtonControlEvents
 {
-    // Different from InputControlEvents::ChangeState
-    ChangeState = 0x02
+    /** param=(bool)buttonState ptr=nullptr */
+    ButtonChangeState = 0x02
 };
 
 /** Represents a single character on the display that can be toggled on or off.
@@ -14,9 +14,9 @@ enum class ButtonControlEvents
 template <const uint8_t OffChar, const uint8_t OnChar>
 class ButtonControl : public InputControl
 {
+public:
     typedef InputControl BaseT;
 
-public:
     ButtonControl(uint8_t pos = 0, InputControlHandler *handler = nullptr)
         : BaseT(pos, handler) {}
 
@@ -64,7 +64,7 @@ protected:
         if (BaseT::getIsSelected())
         {
             _buttonState = !_buttonState;
-            BaseT::HandlerOnInputEvent(Event(ButtonControlEvents::ChangeState), EventParam(_buttonState));
+            BaseT::HandlerOnInputEvent(Event(ButtonControlEvents::ButtonChangeState), EventParam(_buttonState));
             return true;
         }
 

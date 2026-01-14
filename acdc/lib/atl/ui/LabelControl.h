@@ -6,9 +6,9 @@
  */
 class LabelControl : public Control
 {
+public:
     typedef Control BaseT;
 
-public:
     /** Constructs the instance with an optional position.
      *  Call `setText()` to assign text to the control.
      *  \param pos is the position relative to its siblings.
@@ -23,9 +23,7 @@ public:
      *  \param pos is the position relative to its siblings.
      */
     LabelControl(const char *text, uint8_t pos = 0)
-        : Control(pos, ControlState::Disabled), _text(text)
-    {
-    }
+        : Control(pos, ControlState::Disabled), _text(text) {}
 
     /** Outputs the text to the display (if available).
      *  Does nothing in modeCursor.

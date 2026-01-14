@@ -12,18 +12,16 @@
 template <class ValueT>
 class UpDownControl : public InputControl
 {
+public:
     typedef InputControl BaseT;
 
-public:
     /** Constructs an initialized instance.
      *  \param value points to the value instance. Must not be NULL.
      *  \param pos is the optional position relative to its siblings.
      *  \param handler callback handler for custom nav-commands and input events.
      */
     UpDownControl(ValueT *value, uint8_t pos = 0, InputControlHandler *handler = nullptr)
-        : BaseT(pos, handler), _value(value)
-    {
-    }
+        : BaseT(pos, handler), _value(value) {}
 
     /** Writes the value as text to the DisplayWriter.
      *  Calls ValueT::ToString() to retrieve that text.

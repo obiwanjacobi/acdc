@@ -24,7 +24,7 @@ public:
      */
     Iterator() : _index(-1) {}
 
-    /** Constructs an initialized instance.
+    /** Constructs an initialized instance (pass-through).
      *  \param array points to the (untyped) array that is passed to BaseT.
      */
     Iterator(const void *array)

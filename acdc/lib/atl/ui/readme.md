@@ -31,6 +31,8 @@ Control Class Hierarchy:
     - `UpDownControl`
       - `EditControl`
         - `TextControl`
+      - `SelectControl`
+        - `OptionsControl`
     - `ButtonControl`
     - `Panel`
       - `PanelControlContainer` (+`ControlContainer`)
@@ -71,6 +73,15 @@ A base class for all controls that use the `NavigationCommands` to allow editing
 
 This class allows registering a `InputControlHandler` that can intercept navigation commands and receives InputControl events.
 
+#### `InputControl` Events
+
+The actual values of each event has to be unique across all Controls.
+The value 0x00 is not used as an event identifier.
+
+- `InputControl` ChangeState (0x01). When an `InputControl` is set to a new `ControlState`.
+- `ButtonControl` ButtonChangeState (0x02). When the `ButtonControl` state is toggled (on/off).
+- `Panel` PanelChangeState (0x03). When the `Panel`'s current control is changed (2x).
+
 ### `UpDownControl` extends `InputControl` (template)
 
 Manages changing a value with the Up/Down navigation Commands in edit mode (Selected).
@@ -82,6 +93,14 @@ Implements text editing in a control using a character provider (iterator).
 ### `TextControl` extends `EditControl` (template)
 
 Manages displaying and editing a fixes-size string.
+
+### `SelectControl` extends `UpDownControl` (template)
+
+Implements a control to select from a list of options using an options provider (iterator).
+
+### `OptionsControl` extends `SelectControl` (template)
+
+Implements options selection based on an array with pointers to text.
 
 ### `ButtonControl` extends `InputControl` (template)
 
@@ -137,3 +156,5 @@ An abstraction to decouple drawing controls and UI in general onto any display.
 - HorizontalScrollPanel (uses HD44780_ViewPort - `DisplayWriter` extension?) handles more characters than display width.
 - MenuPage (VerticalScrollPanel)
 - Decide if Page uses PanelControlContainer, HorizontalPanel or Line as 'line'.
+- Page: have method to know if any control is focused and/or selected.
+- Test runtime changes of ControlState::Hidden etc.
