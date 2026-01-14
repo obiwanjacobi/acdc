@@ -8,6 +8,7 @@ class OptionsIterator
 public:
     typedef const char *ItemT;
 
+    // for pass-through ctor of Iterator
     OptionsIterator(const void *options)
     {
         _options = (OptionsT *)options;

@@ -70,9 +70,9 @@ public:
      */
     bool TryValueUp()
     {
-        // LogTrace("Ud:ValUp");
         if (BaseT::getIsSelected())
         {
+            // LogTrace("Ud:ValUp");
             _value->IncrementValue();
             return true;
         }
@@ -85,9 +85,9 @@ public:
      */
     bool TryValueDown()
     {
-        // LogTrace("Ud:ValDwn");
         if (BaseT::getIsSelected())
         {
+            // LogTrace("Ud:ValDwn");
             _value->DecrementValue();
             return true;
         }

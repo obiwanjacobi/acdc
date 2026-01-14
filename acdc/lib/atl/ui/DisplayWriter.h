@@ -15,17 +15,13 @@ public:
     /** Writes the text to the current (cursor) position on the display.
      *  \param text points to a NULL terminated string.
      */
-    virtual void Display(const char * /*text*/)
-    {
-    }
+    virtual void Display(const char * /*text*/) {}
 
     /** Repositions the current cursor position to the specified lineIndex and columnIndex.
      *  \param lineIndex is a zero-based index for the line in the display.
      *  \param columnIndex is a zero-based index for the column in the display.
      */
-    virtual void GoTo(uint8_t /*lineIndex*/, uint8_t /*columnIndex*/)
-    {
-    }
+    virtual void GoTo(uint8_t /*lineIndex*/, uint8_t /*columnIndex*/) {}
 
     /** Displays a cursor at the specified lineIndex and columnIndex.
      *  If edit is true, the edit-cursor is displayed.
@@ -33,9 +29,7 @@ public:
      *  \param columnIndex is a zero-based index for the column in the display.
      *  \param edit is an indication to display a 'edit' cursor
      */
-    virtual void EnableCursor(uint8_t /*lineIndex*/, uint8_t /*columnIndex*/, bool /*edit*/)
-    {
-    }
+    virtual void EnableCursor(uint8_t /*lineIndex*/, uint8_t /*columnIndex*/, bool /*edit*/) {}
 
     /** Removes the cursor from the display
      */
@@ -46,7 +40,5 @@ public:
     }
 
 protected:
-    DisplayWriter()
-    {
-    }
+    DisplayWriter() {}
 };

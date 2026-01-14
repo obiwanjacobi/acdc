@@ -206,8 +206,7 @@ public:
         WriteCharacterAddress((characterPos & 0x07) << 3);
         for (uint8_t i = 0; i < 8; i++)
         {
-            // BaseT::WriteData(characterData->GetAt(i));
-            BaseT::WriteData(0x55);
+            BaseT::WriteData(characterData->GetAt(i));
         }
     }
 

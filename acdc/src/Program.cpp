@@ -239,7 +239,7 @@ public:
         character[5] = 0b00100;
         character[6] = 0b00000;
         character[7] = 0b00000;
-        lcd.CreateCharacter(0, &character);
+        lcd.CreateCharacter(1, &character);
         character[0] = 0b00000;
         character[1] = 0b00100;
         character[2] = 0b01110;
@@ -248,7 +248,7 @@ public:
         character[5] = 0b00100;
         character[6] = 0b00000;
         character[7] = 0b00000;
-        lcd.CreateCharacter(1, &character);
+        lcd.CreateCharacter(2, &character);
 
         lcd.setEnableDisplay();
 

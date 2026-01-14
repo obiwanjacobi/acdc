@@ -70,7 +70,7 @@ private:
         LabelControl Label;
         AsciiTextControl<5> Text;
         OptionsControl<FixedArray<const char *, 3>> Options;
-        ButtonControl<'O', 'X'> Button;
+        ButtonControl<1, 2> Button;
 
     private:
         FixedArray<const char *, 3> _options;

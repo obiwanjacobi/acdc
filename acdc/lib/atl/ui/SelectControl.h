@@ -60,23 +60,27 @@ public:
         return _iterator.MoveToIndex(value);
     }
 
-    /** Overridden to display the cursor on the character position that is being edited.
-     *  \param output is used to output text and position the cursor.
-     *  \mode indicates what to display.
-     */
-    // void Display(DisplayWriter *output) override
-    // {
-    //     const char *text = getText();
-    //     if (text != nullptr)
-    //         output->Display(text);
-    // }
-
 protected:
+    /** Overridden to disallow going to the `Focused` when not enabled.
+     *  \param newState is the proposed state.
+     */
+    bool BeforeChangeState(ControlState newState) override
+    {
+        if (!BaseT::BeforeChangeState(newState))
+            return false;
+
+        if (newState == ControlState::Selected && !_iterator->getIsValidPosition())
+            _iterator->MoveNext();
+
+        return true;
+    }
+
     /** Called by the UpDownControl to increment the 'value'.
      */
     void IncrementValue()
     {
-        if (_iterator->MoveNext())
+        // reversed!
+        if (_iterator->MoveBack())
         {
             // LogTrace("Sel:IncVal");
         }
@@ -86,42 +90,12 @@ protected:
      */
     void DecrementValue()
     {
-        if (_iterator->MoveBack())
+        // reversed!
+        if (_iterator->MoveNext())
         {
             // LogTrace("Sel:DecVal");
         }
     }
-
-    /** Helper method that sets the CharacterIteratorT at the character at the current edit position.
-     */
-    // void RepositionIterator()
-    // {
-    //     if (!_iterator->MoveToIndex(_selectIndex))
-    //     {
-    //         // MoveTo can fail when _str[_editIndex] returns a terminating \0
-    //         _iterator->Reset();
-    //         // TODO: Do we call (ValueT*)->IncrementValue() here?
-    //         _iterator->MoveNext();
-    //         // make sure there is a valid char (overwrite terminating \0)
-    //         _str->SetAt(_editIndex, _iterator->getCurrent());
-    //     }
-    // }
-
-    /** Overridden to manage the character edit position when going in/out of `Focused` and `Selected`.
-     *  Does not alter behavior.
-     *  \param newState is the proposed state.
-     *  \return Returns true when the state change is allowed.
-     */
-    // bool BeforeChangeState(ControlState newState) override
-    // {
-    //     if (!BaseT::BeforeChangeState(newState))
-    //         return false;
-
-    //     if (newState == ControlState::Selected)
-    //         RepositionIterator();
-
-    //     return true;
-    // }
 
 private:
     OptionsIteratorT *_iterator;
